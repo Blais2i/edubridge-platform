@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type UserData = {
+export type UserData = {
   name?: string;
   email?: string;
   phone?: string;

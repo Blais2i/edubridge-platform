@@ -1,86 +1,95 @@
-// app/register/page.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
-import { useUser } from '@/app/lib/user-context';
-import type { UserData } from '@/app/lib/user-context-provider';
+import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { updateUser } = useUser();
 
-  const [name, setName] = useState('');
-  const [contact, setContact] = useState('');
-  const [age, setAge] = useState('');
-  const [grade, setGrade] = useState<'P4' | 'P5' | 'P6' | 'S1' | 'S2' | 'S3'>('P5');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [grade, setGrade] = useState("");
+  const [language, setLanguage] = useState("");
+  const [error, setError] = useState("");
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    const user: Partial<UserData> = {
-      name: name || (contact.includes('@') ? contact.split('@')[0] : contact),
-      email: contact.includes('@') ? contact : undefined,
-      phone: contact.includes('@') ? undefined : contact,
-      age: age || '',
-      grade,
-      educationLevel: (grade.startsWith('P') ? 'primary' : 'oLevel') as UserData['educationLevel'],
-      languagePref: 'rw',
-      isGuest: false,
-    };
-    localStorage.setItem('edubridge-user', JSON.stringify(user));
-    updateUser(user);
-    router.push('/chat');
+  const handleRegister = async () => {
+    setError("");
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          grade,
+          language
+        }
+      }
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    router.push("/chat");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-white to-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow">
-        <div className="flex items-center gap-4 mb-6">
-          <Logo size={56} />
-          <div>
-            <h1 className="text-xl font-bold">Create account</h1>
-            <p className="text-sm text-gray-500">Join Blaise AI — it's free for testing</p>
-          </div>
-        </div>
+    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
+      <h1 className="text-2xl font-semibold mb-4">Create an account</h1>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Full name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-cyan-200" placeholder="Blaise" />
-          </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        placeholder="Full name"
+        value={fullName}
+        onChange={e => setFullName(e.target.value)}
+      />
 
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Phone or email</label>
-            <input value={contact} onChange={(e) => setContact(e.target.value)} required className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-cyan-200" placeholder="0788xxx or you@mail.com" />
-          </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        placeholder="Grade"
+        value={grade}
+        onChange={e => setGrade(e.target.value)}
+      />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Age (optional)</label>
-              <input value={age} onChange={(e) => setAge(e.target.value)} className="w-full border rounded px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Grade</label>
-                <select value={grade} onChange={(e) => setGrade(e.target.value as 'P4' | 'P5' | 'P6' | 'S1' | 'S2' | 'S3')} className="w-full border rounded px-3 py-2">
-                  <option value="P4">P4</option>
-                  <option value="P5">P5</option>
-                  <option value="P6">P6</option>
-                  <option value="S1">S1</option>
-                  <option value="S2">S2</option>
-                  <option value="S3">S3</option>
-                </select>
-            </div>
-          </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        placeholder="Language"
+        value={language}
+        onChange={e => setLanguage(e.target.value)}
+      />
 
-          <div className="flex gap-3">
-            <button type="submit" className="flex-1 bg-cyan-500 text-white rounded px-4 py-2">Create account</button>
-            <button type="button" onClick={() => router.push('/login')} className="flex-1 bg-white border rounded px-4 py-2">Sign in</button>
-          </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        placeholder="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
 
-          <p className="text-xs text-gray-400 text-center">Your info is stored locally during MVP testing.</p>
-        </form>
-      </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+      />
+
+      {error && <p className="text-red-600 mb-3">{error}</p>}
+
+      <button
+        onClick={handleRegister}
+        className="w-full bg-blue-600 text-white py-2 rounded"
+      >
+        Register
+      </button>
+
+      <p className="mt-4 text-center">
+        Already have an account?
+        <a href="/login" className="text-blue-600 ml-1">Sign in</a>
+      </p>
     </div>
   );
 }

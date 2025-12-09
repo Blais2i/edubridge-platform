@@ -1,8 +1,7 @@
-// File: app/lib/user-context-provider.tsx
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from './supabaseClient';
+import { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 import type { User } from '@supabase/supabase-js';
 
 type UserContextType = {
@@ -10,9 +9,12 @@ type UserContextType = {
   loading: boolean;
 };
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType>({
+  user: null,
+  loading: true
+});
 
-export function UserProvider({ children }: { children: ReactNode }) {
+export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +30,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     // Listen for login, logout
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: string, session: any) => {
+      (_event, session) => {
         setUser(session?.user || null);
       }
     );
@@ -46,9 +48,5 @@ export function UserProvider({ children }: { children: ReactNode }) {
 }
 
 export function useUser() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
+  return useContext(UserContext);
 }

@@ -1,73 +1,64 @@
-// app/login/page.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
-import { useUser } from '@/app/lib/user-context';
-import type { UserData } from '@/app/lib/user-context-provider';
+import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { updateUser } = useUser();
-  const [contact, setContact] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Lightweight MVP: local "login" by loading saved user if exists
-    const saved = localStorage.getItem('edubridge-user');
-    if (saved) {
-      const user = JSON.parse(saved);
-      updateUser(user);
-      router.push('/chat');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = async () => {
+    setError("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      setError(error.message);
       return;
     }
-    // If no user saved, create minimal guest-like user with provided contact
-    const user: Partial<UserData> = {
-      name: contact.includes('@') ? contact.split('@')[0] : contact,
-      email: contact.includes('@') ? contact : undefined,
-      phone: contact.includes('@') ? undefined : contact,
-      grade: 'P5' as UserData['grade'],
-      educationLevel: 'primary' as UserData['educationLevel'],
-      languagePref: 'rw',
-      isGuest: false,
-    };
-    localStorage.setItem('edubridge-user', JSON.stringify(user));
-    updateUser(user);
-    router.push('/chat');
+
+    router.push("/chat");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-white to-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow">
-        <div className="flex items-center gap-4 mb-6">
-          <Logo size={56} />
-          <div>
-            <h1 className="text-xl font-bold">Blaise AI</h1>
-            <p className="text-sm text-gray-500">Sign in to continue learning</p>
-          </div>
-        </div>
+    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
+      <h1 className="text-2xl font-semibold mb-4">Sign in</h1>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Phone or email</label>
-            <input value={contact} onChange={(e) => setContact(e.target.value)} required className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-cyan-200" placeholder="0788xxx or you@mail.com" />
-          </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        placeholder="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
 
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Password (any)</label>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-cyan-200" placeholder="••••••" />
-          </div>
+      <input
+        className="w-full p-2 border rounded mb-3"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+      />
 
-          <div className="flex gap-3">
-            <button type="submit" className="flex-1 bg-cyan-500 text-white rounded px-4 py-2">Sign in</button>
-            <button type="button" onClick={() => { localStorage.removeItem('edubridge-user'); router.push('/register'); }} className="flex-1 bg-white border rounded px-4 py-2">Create account</button>
-          </div>
+      {error && <p className="text-red-600 mb-3">{error}</p>}
 
-          <p className="text-xs text-gray-400 text-center">For MVP: login saves locally for quick testing.</p>
-        </form>
-      </div>
+      <button
+        onClick={handleLogin}
+        className="w-full bg-blue-600 text-white py-2 rounded"
+      >
+        Login
+      </button>
+
+      <p className="mt-4 text-center">
+        Need an account?
+        <a href="/register" className="text-blue-600 ml-1">Register</a>
+      </p>
     </div>
   );
 }

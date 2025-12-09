@@ -5,7 +5,7 @@ import Logo from './Logo';
 import { useUser } from '@/app/lib/user-context';
 
 export default function TopBar() {
-  const { user, logout } = useUser();
+  const { user } = useUser();
 
   return (
     <header className="bg-white border-b">
@@ -19,8 +19,13 @@ export default function TopBar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-700">{user?.name || 'Guest'}</div>
-          <button onClick={logout} className="px-3 py-1 rounded border border-gray-200 text-sm">Logout</button>
+          <div className="text-sm text-gray-700">{user?.user_metadata?.full_name || user?.email || 'Guest'}</div>
+          <button
+            onClick={() => {/* TODO: Add logout handler */}}
+            className="px-3 py-1 rounded border border-gray-200 text-sm hover:bg-gray-50"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </header>

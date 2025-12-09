@@ -1,2 +1,2 @@
-// Small re-export so TS/JSX consumers import from the same path
+// Re-export from provider module to keep clean import paths
 export { UserProvider, useUser } from './user-context-provider';

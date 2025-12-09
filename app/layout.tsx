@@ -1,25 +1,16 @@
-// File: app/layout.tsx (update this file)
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import { UserProvider } from "@/app/lib/user-context"; // ADD THIS IMPORT
+import { UserProvider } from "./lib/user-context";
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "EduBridge Rwanda",
-  description: "AI-powered homework help for Rwanda curriculum",
+export const metadata = {
+  title: "BlaiseAI",
+  description: "AI study assistant for East Africa"
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <UserProvider> {/* WRAP WITH USERPROVIDER */}
+      <body className="bg-gray-100 text-gray-900">
+        <UserProvider>
           {children}
         </UserProvider>
       </body>

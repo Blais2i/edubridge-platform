@@ -4,12 +4,16 @@
 import TopBar from '@/components/TopBar';
 import Sidebar from '@/components/Sidebar';
 import ChatInterface from '@/components/ChatInterface';
+import { useState } from 'react';
 import { useUser } from '@/app/lib/user-context';
 
 export default function ChatPage() {
-  const { user, isLoading } = useUser();
+  const { user, loading } = useUser();
+  const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   if (!user) {
     return (
@@ -23,16 +27,16 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <TopBar />
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
-        <aside className="col-span-3">
-          <Sidebar />
-        </aside>
+        <div className="col-span-3">
+          <Sidebar onOpen={(id) => setActiveConversation(id)} />
+        </div>
 
-        <main className="col-span-9">
-          <ChatInterface />
-        </main>
+        <div className="col-span-9">
+          <ChatInterface conversationIdProp={activeConversation} onConversationCreated={(id) => setActiveConversation(id)} />
+        </div>
       </div>
     </div>
   );

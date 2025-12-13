@@ -1,5 +1,5 @@
 import "./globals.css";
-import { UserProvider } from "./lib/user-context";
+import { UserProvider } from "./context/UserContext";
 
 export const metadata = {
   title: "BlaiseAI",
@@ -9,7 +9,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-gray-100 text-gray-900">
+      <body>
         <UserProvider>
           {children}
         </UserProvider>

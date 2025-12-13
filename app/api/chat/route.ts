@@ -1,133 +1,75 @@
-// File: app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-
-type ChatRequestBody = {
-  name?: string;
-  age?: number | string;
-  identifier?: string; 
-  grade?: string;
-  language?: "en" | "rw";
-  question: string;
-};
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o-mini";
 
-export async function POST(request: NextRequest) {
-  try {
-    const body: ChatRequestBody = await request.json();
-    const { name, grade, language = "rw", question } = body;
+const systemPrompt = `
+You are Blaise AI, a warm, friendly tutor for students in Rwanda.
+Speak naturally, like a young human tutor, not a robot.
 
-    if (!question || !question.toString().trim()) {
-      return NextResponse.json(
-        { error: "Question is required" },
-        { status: 400 }
-      );
-    }
+Rules:
+- Greet politely and briefly.
+- Explain step by step.
+- Do not give full answers immediately.
+- Be encouraging and patient.
+- Always answer first in Kinyarwanda, then short English.
 
-    // New Kinyarwanda-Natural System Prompt
-    const systemPrompt = `
-You are EduBridge Assistant. Your task is to help Rwandan primary and secondary students understand lessons clearly and calmly.
-
-Follow this Kinyarwanda Response Style Guide:
-
-1. LANGUAGE LEVEL
-- Adjust explanations to the student's grade (P1–S6).
-- Keep sentences short and easy.
-- For small classes: simple everyday Kinyarwanda.
-- For higher classes: more detail but still clear.
-
-2. TONE AND MANNER
-- Warm, calm, encouraging tone.
-- Use natural Kinyarwanda expressions such as:
-  “Reka tubirebe”, “Reka mbigusobanurire mu buryo bworoshye”, “Dore ibisobanuro bikwiye”.
-- Avoid harsh correction. Prefer phrases like:
-  “Wagerageje neza. Reba uburyo bukwiye…”
-
-3. EXPLANATION STRUCTURE
-Always reply in this order unless asked otherwise:
-- First explanation in Kinyarwanda.
-- Short simple version.
-- Then a clearer extended version if needed.
-- After that, provide an English version.
-
-4. ACCURACY AND CONTEXT
-- Use Rwanda-based examples (ibiti, imvura, amoko y’inyamaswa, isoko, amafaranga y’u Rwanda).
-- If the topic is a standard curriculum topic, match the level commonly taught.
-
-5. CHECKING UNDERSTANDING
-End with one gentle question like:
-- “Urashaka urugero?”
-- “Ndabisobanure mu bundi buryo?”
-- “Dukomeze ku kindi gice?”
-
-6. LIMITS
-- Do not give direct exam answers.
-- Guide the student step by step.
-
-End of guide.
-    `;
-
-    // Light user context
-    const userContent = `
-Student name: ${name || "Student"}
-Grade: ${grade || "unknown"}
-Language preference: ${language}
-Question: ${question}
-Instruction: Follow the EduBridge Style Guide strictly.
+If student is sad or casual, respond kindly and gently guide them back to study.
 `;
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      console.error("Missing OPENAI_API_KEY in environment");
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+
+    if (!body?.question) {
       return NextResponse.json(
-        { error: "Server misconfiguration" },
-        { status: 500 }
+        { response: "Ndumva nta kibazo wanditse. Gerageza kongera." },
+        { status: 200 }
       );
     }
 
-    const resp = await fetch(OPENAI_URL, {
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: body.question },
+    ];
+
+    const openaiRes = await fetch(OPENAI_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
+        messages,
         temperature: 0.6,
-        max_tokens: 900,
+        max_tokens: 700,
       }),
     });
 
-    if (!resp.ok) {
-      const t = await resp.text();
-      console.error("OpenAI error", resp.status, t);
+    if (!openaiRes.ok) {
+      const errorText = await openaiRes.text();
+      console.error("OpenAI error:", errorText);
+
       return NextResponse.json(
-        { error: "Failed to contact AI service" },
-        { status: 502 }
+        { response: "Habaye ikibazo kuri AI. Ongera ugerageze." },
+        { status: 200 }
       );
     }
 
-    const aiJson = await resp.json();
-    const message = aiJson?.choices?.[0]?.message?.content || null;
+    const json = await openaiRes.json();
+    const reply = json?.choices?.[0]?.message?.content;
 
-    if (!message) {
-      return NextResponse.json(
-        { error: "No response from AI" },
-        { status: 502 }
-      );
-    }
+    return NextResponse.json({
+      response:
+        reply || "Ndakumva, ariko reka tugerageze kubisobanura buhoro.",
+    });
+  } catch (err: any) {
+  console.error("API /chat crash:", err?.message || err);
 
-    return NextResponse.json({ response: message });
-  } catch (err) {
-    console.error("API /chat error", err);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { response: "Habaye ikibazo kidateganyijwe. Ongera ugerageze." },
+      { status: 200 }
     );
   }
 }

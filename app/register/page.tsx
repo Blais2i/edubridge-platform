@@ -1,95 +1,152 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "@/app/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
+
+function generateEmailFromPhone(phone: string) {
+  const clean = phone.replace(/\D/g, "");
+  return `parent_${clean}@blaiseai.local`;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [childName, setChildName] = useState("");
   const [grade, setGrade] = useState("");
-  const [language, setLanguage] = useState("");
-  const [error, setError] = useState("");
+  const [parentPhone, setParentPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [language, setLanguage] = useState("rw");
+  const [password, setPassword] = useState("");
 
-  const handleRegister = async () => {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleRegister() {
     setError("");
 
+    if (!childName || !grade || !parentPhone || !password) {
+      setError("Please fill all required fields.");
+      return;
+    }
+
+    setLoading(true);
+
+    const finalEmail = email.trim()
+      ? email.trim()
+      : generateEmailFromPhone(parentPhone);
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: finalEmail,
       password,
       options: {
         data: {
-          full_name: fullName,
+          full_name: childName,
           grade,
-          language
-        }
-      }
+          parent_phone: parentPhone,
+          language,
+          role: "student",
+        },
+      },
     });
+
+    setLoading(false);
 
     if (error) {
       setError(error.message);
       return;
     }
 
-    router.push("/chat");
-  };
+    router.push("/success");
+  }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
-      <h1 className="text-2xl font-semibold mb-4">Create an account</h1>
+    <div className="min-h-screen bg-linear-to-br from-cyan-50 to-blue-50 flex items-center justify-center px-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
 
-      <input
-        className="w-full p-2 border rounded mb-3"
-        placeholder="Full name"
-        value={fullName}
-        onChange={e => setFullName(e.target.value)}
-      />
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <Logo size={120} />
+        </div>
 
-      <input
-        className="w-full p-2 border rounded mb-3"
-        placeholder="Grade"
-        value={grade}
-        onChange={e => setGrade(e.target.value)}
-      />
+        <h1 className="text-2xl font-bold text-center mb-2">
+          Create an account
+        </h1>
+        <p className="text-center text-gray-500 text-sm mb-6">
+          Help your child learn with Blaise AI
+        </p>
 
-      <input
-        className="w-full p-2 border rounded mb-3"
-        placeholder="Language"
-        value={language}
-        onChange={e => setLanguage(e.target.value)}
-      />
+        {/* Child name */}
+        <input
+          className="w-full border rounded-lg p-3 mb-3"
+          placeholder="Child full name *"
+          value={childName}
+          onChange={(e) => setChildName(e.target.value)}
+        />
 
-      <input
-        className="w-full p-2 border rounded mb-3"
-        placeholder="Email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-      />
+        {/* Grade */}
+        <input
+          className="w-full border rounded-lg p-3 mb-3"
+          placeholder="Grade (P4, P6, S2, S6) *"
+          value={grade}
+          onChange={(e) => setGrade(e.target.value)}
+        />
 
-      <input
-        className="w-full p-2 border rounded mb-3"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-      />
+        {/* Parent phone */}
+        <input
+          className="w-full border rounded-lg p-3 mb-3"
+          placeholder="Parent phone number *"
+          value={parentPhone}
+          onChange={(e) => setParentPhone(e.target.value)}
+        />
 
-      {error && <p className="text-red-600 mb-3">{error}</p>}
+        {/* Optional email */}
+        <input
+          className="w-full border rounded-lg p-3 mb-3"
+          placeholder="Email (optional)"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      <button
-        onClick={handleRegister}
-        className="w-full bg-blue-600 text-white py-2 rounded"
-      >
-        Register
-      </button>
+        {/* Language */}
+        <select
+          className="w-full border rounded-lg p-3 mb-3"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
+          <option value="rw">Kinyarwanda</option>
+          <option value="en">English</option>
+        </select>
 
-      <p className="mt-4 text-center">
-        Already have an account?
-        <a href="/login" className="text-blue-600 ml-1">Sign in</a>
-      </p>
+        {/* Password */}
+        <input
+          type="password"
+          className="w-full border rounded-lg p-3 mb-3"
+          placeholder="Password *"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {error && (
+          <p className="text-red-600 text-sm mb-3">{error}</p>
+        )}
+
+        <button
+          onClick={handleRegister}
+          disabled={loading}
+          className="w-full py-3 rounded-lg bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
+        >
+          {loading ? "Creating account..." : "Create account"}
+        </button>
+
+        <p className="text-center text-sm text-gray-600 mt-4">
+          Already have an account?{" "}
+          <a href="/login" className="text-cyan-700 font-semibold">
+            Login
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

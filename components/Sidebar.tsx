@@ -1,45 +1,69 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
+import { supabase } from "@/app/lib/supabaseClient";
+import { useUser } from "@/app/context/UserContext";
 
-export default function Sidebar() {
+type Conversation = {
+  id: string;
+  title: string | null;
+};
+
+export default function Sidebar({
+  activeConversationId,
+  onSelectConversation,
+  onNewChat,
+  refreshKey,
+}: {
+  activeConversationId: string | null;
+  onSelectConversation: (id: string) => void;
+  onNewChat: () => void;
+  refreshKey: number;
+}) {
+  const { user } = useUser();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const load = async () => {
+      const { data } = await supabase
+        .from("conversations")
+        .select("id, title")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setConversations(data || []);
+    };
+
+    load();
+  }, [user, refreshKey]);
+
   return (
-    <div className="h-full bg-linear-to-b from-slate-900 to-slate-800 text-white p-4 rounded-xl flex flex-col">
-      {/* Logo */}
-      <div className="flex items-center gap-3 mb-6">
-        <Image
-          src="/blaise-ai-logo.png"
-          alt="Blaise AI"
-          width={36}
-          height={36}
-        />
-        <div>
-          <h2 className="font-semibold">Blaise AI</h2>
-          <p className="text-xs text-slate-300">Your tutor</p>
-        </div>
-      </div>
-
-      {/* New Chat */}
-      <button className="bg-linear-to-r from-cyan-500 to-purple-500 text-white rounded-lg py-2 mb-4">
+    <div className="w-64 bg-slate-900 text-white p-4 flex flex-col">
+      <button
+        onClick={onNewChat}
+        className="mb-4 bg-cyan-600 rounded px-3 py-2"
+      >
         + New chat
       </button>
 
-      {/* Recent */}
-      <div className="text-sm text-slate-300 mb-2">Recent</div>
-      <div className="text-slate-400 text-sm mb-6">No chats yet</div>
+      <div className="text-sm mb-2">Recent</div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Account */}
-      <div className="flex items-center gap-3 border-t border-slate-700 pt-4">
-        <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center font-bold">
-          B
-        </div>
-        <div>
-          <p className="text-sm">Blaise Iradukunda</p>
-          <p className="text-xs text-slate-400">Account & settings</p>
-        </div>
+      <div className="space-y-1 flex-1 overflow-y-auto">
+        {conversations.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => onSelectConversation(c.id)}
+            className={`block w-full text-left px-2 py-1 rounded ${
+              c.id === activeConversationId
+                ? "bg-white/20"
+                : "hover:bg-white/10"
+            }`}
+          >
+            {c.title || "New chat"}
+          </button>
+        ))}
       </div>
     </div>
   );

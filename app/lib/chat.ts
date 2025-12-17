@@ -14,32 +14,28 @@ export async function createConversation(userId: string) {
   return data;
 }
 
-export async function listConversations(userId: string) {
+export async function getLatestConversation(userId: string) {
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) return null;
+  return data;
+}
+
+export async function getConversations(userId: string) {
   const { data, error } = await supabase
     .from("conversations")
     .select("*")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) return [];
   return data || [];
-}
-
-export async function updateConversationTitle(
-  conversationId: string,
-  title: string
-) {
-  const { error } = await supabase
-    .from("conversations")
-    .update({ title })
-    .eq("id", conversationId);
-
-  if (error) throw error;
-}
-
-export async function deleteConversation(conversationId: string) {
-  await supabase.from("messages").delete().eq("conversation_id", conversationId);
-  await supabase.from("conversations").delete().eq("id", conversationId);
 }
 
 export async function saveMessage(
@@ -47,13 +43,16 @@ export async function saveMessage(
   role: "user" | "assistant",
   content: string
 ) {
-  const { error } = await supabase.from("messages").insert({
+  await supabase.from("messages").insert({
     conversation_id: conversationId,
     role,
     content,
   });
 
-  if (error) throw error;
+  await supabase
+    .from("conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", conversationId);
 }
 
 export async function loadMessages(conversationId: string) {
@@ -63,6 +62,6 @@ export async function loadMessages(conversationId: string) {
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
-  if (error) throw error;
+  if (error) return [];
   return data || [];
 }

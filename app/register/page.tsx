@@ -15,6 +15,7 @@ export default function RegisterPage() {
 
   const [childName, setChildName] = useState("");
   const [grade, setGrade] = useState("");
+  const [schoolName, setSchoolName] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [email, setEmail] = useState("");
   const [language, setLanguage] = useState("rw");
@@ -26,7 +27,7 @@ export default function RegisterPage() {
   async function handleRegister() {
     setError("");
 
-    if (!childName || !grade || !parentPhone || !password) {
+    if (!childName || !grade || !schoolName || !parentPhone || !password) {
       setError("Please fill all required fields.");
       return;
     }
@@ -37,35 +38,55 @@ export default function RegisterPage() {
       ? email.trim()
       : generateEmailFromPhone(parentPhone);
 
-    const { error } = await supabase.auth.signUp({
-      email: finalEmail,
-      password,
-      options: {
-        data: {
+    try {
+      // Clear any existing session
+      await supabase.auth.signOut();
+
+      // 1️⃣ Create auth user
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: finalEmail,
+        password,
+        options: {
+          emailRedirectTo: "http://localhost:3000/auth/confirm",
+        },
+      });
+
+      if (signUpError || !data.user) {
+        setError(signUpError?.message || "Signup failed");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Insert profile data
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: data.user.id,
           full_name: childName,
           grade,
+          school_name: schoolName,
           parent_phone: parentPhone,
           language,
-          role: "student",
-        },
-      },
-    });
+        });
 
-    setLoading(false);
+      if (profileError) {
+        setError("Database error saving new user");
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      setError(error.message);
-      return;
+      // 3️⃣ Success
+      router.push("/success");
+    } catch (err) {
+      setError("Registration failed. Try again.");
+      setLoading(false);
     }
-
-    router.push("/success");
   }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-cyan-50 to-blue-50 flex items-center justify-center px-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
 
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <Logo size={120} />
         </div>
@@ -77,7 +98,6 @@ export default function RegisterPage() {
           Help your child learn with Blaise AI
         </p>
 
-        {/* Child name */}
         <input
           className="w-full border rounded-lg p-3 mb-3"
           placeholder="Child full name *"
@@ -85,7 +105,6 @@ export default function RegisterPage() {
           onChange={(e) => setChildName(e.target.value)}
         />
 
-        {/* Grade */}
         <input
           className="w-full border rounded-lg p-3 mb-3"
           placeholder="Grade (P4, P6, S2, S6) *"
@@ -93,7 +112,13 @@ export default function RegisterPage() {
           onChange={(e) => setGrade(e.target.value)}
         />
 
-        {/* Parent phone */}
+        <input
+          className="w-full border rounded-lg p-3 mb-3"
+          placeholder="School name *"
+          value={schoolName}
+          onChange={(e) => setSchoolName(e.target.value)}
+        />
+
         <input
           className="w-full border rounded-lg p-3 mb-3"
           placeholder="Parent phone number *"
@@ -101,7 +126,6 @@ export default function RegisterPage() {
           onChange={(e) => setParentPhone(e.target.value)}
         />
 
-        {/* Optional email */}
         <input
           className="w-full border rounded-lg p-3 mb-3"
           placeholder="Email (optional)"
@@ -109,7 +133,6 @@ export default function RegisterPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* Language */}
         <select
           className="w-full border rounded-lg p-3 mb-3"
           value={language}
@@ -119,7 +142,6 @@ export default function RegisterPage() {
           <option value="en">English</option>
         </select>
 
-        {/* Password */}
         <input
           type="password"
           className="w-full border rounded-lg p-3 mb-3"

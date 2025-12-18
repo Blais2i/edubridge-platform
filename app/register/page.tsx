@@ -42,42 +42,31 @@ export default function RegisterPage() {
       // Clear any existing session
       await supabase.auth.signOut();
 
-      // 1️⃣ Create auth user
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // ✅ ONLY create auth user
+      const { error: signUpError } = await supabase.auth.signUp({
         email: finalEmail,
         password,
         options: {
           emailRedirectTo: "http://localhost:3000/auth/confirm",
+          data: {
+            full_name: childName,
+            grade,
+            school_name: schoolName,
+            parent_phone: parentPhone,
+            language,
+          },
         },
       });
 
-      if (signUpError || !data.user) {
-        setError(signUpError?.message || "Signup failed");
+      if (signUpError) {
+        setError(signUpError.message);
         setLoading(false);
         return;
       }
 
-      // 2️⃣ Insert profile data
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: data.user.id,
-          full_name: childName,
-          grade,
-          school_name: schoolName,
-          parent_phone: parentPhone,
-          language,
-        });
-
-      if (profileError) {
-        setError("Database error saving new user");
-        setLoading(false);
-        return;
-      }
-
-      // 3️⃣ Success
+      // ✅ Profile is created by database trigger
       router.push("/success");
-    } catch (err) {
+    } catch {
       setError("Registration failed. Try again.");
       setLoading(false);
     }

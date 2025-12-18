@@ -23,6 +23,7 @@ export default function ChatInterface({
   onConversationCreated: (id: string) => void;
 }) {
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [conversationId, setConversationId] = useState<string | null>(
     conversationIdProp
   );
@@ -38,6 +39,23 @@ export default function ChatInterface({
       setUser(data.user);
     });
   }, []);
+
+  // Load profile (NEW — read only)
+  useEffect(() => {
+    if (!user) return;
+
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      if (data) setProfile(data);
+    };
+
+    loadProfile();
+  }, [user]);
 
   // Sync conversationId from parent
   useEffect(() => {
@@ -85,7 +103,7 @@ export default function ChatInterface({
       onConversationCreated(data.id);
 
       const firstName =
-        user.user_metadata?.full_name?.split(" ")[0] || "inshuti";
+        profile?.full_name?.split(" ")[0] || "inshuti";
 
       const welcomeMessage: Message = {
         role: "assistant",
@@ -102,7 +120,7 @@ export default function ChatInterface({
     };
 
     createConversation();
-  }, [user, conversationId, onConversationCreated]);
+  }, [user, profile, conversationId, onConversationCreated]);
 
   async function sendMessage() {
     if (!input.trim() || loading || !conversationId || !user) return;
@@ -127,7 +145,7 @@ export default function ChatInterface({
         body: JSON.stringify({
           question: text,
           userId: user.id,
-          conversationId: conversationId, // ✅ MEMORY FIX
+          conversationId: conversationId,
         }),
       });
 
@@ -145,7 +163,7 @@ export default function ChatInterface({
         role: "assistant",
         content: aiMessage.content,
       });
-    } catch (err) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {

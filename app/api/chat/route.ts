@@ -33,28 +33,20 @@ Always make the student feel:
 
 export async function POST(req: NextRequest) {
   try {
-    const { question } = await req.json();
+    const { messages, conversationId } = await req.json();
 
-    // ✅ Only require question
-    if (!question) {
+    if (!messages || !conversationId) {
       return NextResponse.json({ response: "Missing data" });
     }
 
-    // Load recent messages (global recent context)
-    const { data: history } = await supabase
-      .from("messages")
-      .select("role, content")
-      .order("created_at", { ascending: true })
-      .limit(12);
+    console.log("📥 Received conversationId (backend):", conversationId);
 
-    const messages = [
+    const fullMessages = [
       { role: "system", content: systemPrompt },
-      ...(history || []).map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      { role: "user", content: question },
+      ...messages,
     ];
+
+    console.log("🧠 Sending to OpenAI:", JSON.stringify(fullMessages, null, 2));
 
     const openaiRes = await fetch(OPENAI_URL, {
       method: "POST",
@@ -64,16 +56,15 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: MODEL,
-        messages,
+        messages: fullMessages,
         temperature: 0.6,
         max_tokens: 600,
       }),
     });
 
     if (!openaiRes.ok) {
-      return NextResponse.json({
-        response: "AI failed to respond",
-      });
+      console.error("OpenAI error:", await openaiRes.text());
+      return NextResponse.json({ response: "AI failed to respond" });
     }
 
     const json = await openaiRes.json();

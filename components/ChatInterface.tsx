@@ -53,7 +53,6 @@ export default function ChatInterface({
     loadProfile();
   }, [user]);
 
-  // Reset when parent clears conversationIdProp
   useEffect(() => {
     if (conversationIdProp) {
       setConversationId(conversationIdProp);
@@ -124,12 +123,12 @@ export default function ChatInterface({
       onConversationCreated(convoId);
 
       const title = await generateTitleFromFirstMessage(text);
-
       await supabase.from("conversations").update({ title }).eq("id", convoId);
     }
 
     const userMessage: Message = { role: "user", content: text };
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
 
     await supabase.from("messages").insert({
       conversation_id: convoId,
@@ -138,10 +137,15 @@ export default function ChatInterface({
     });
 
     try {
+      console.log("🧵 Using conversation ID (frontend):", convoId);
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text }),
+        body: JSON.stringify({
+          conversationId: convoId,
+          messages: updatedMessages,
+        }),
       });
 
       const json = await res.json();
@@ -167,7 +171,6 @@ export default function ChatInterface({
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-md border">
-      {/* Header with clickable logo */}
       <div className="flex items-center gap-3 p-4 border-b">
         <Logo
           size={28}
@@ -183,13 +186,12 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
           <div className="min-h-full flex items-center justify-center text-center text-slate-500">
             <div>
               <p className="text-lg font-medium mb-2">Muraho {firstName}.</p>
-              <p>Nditeguye kugufasha uyu munsi.  Andika ikibazo wifuza kwiga.</p>
+              <p>Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.</p>
               <p className="text-sm mt-3 text-slate-400">I’m ready to learn with you today.</p>
             </div>
           </div>
@@ -209,7 +211,6 @@ export default function ChatInterface({
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t p-4 flex gap-3">
         <input
           value={input}
@@ -218,7 +219,11 @@ export default function ChatInterface({
           placeholder="Andika ikibazo..."
           className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none"
         />
-        <button onClick={sendMessage} disabled={loading} className="bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm">
+        <button
+          onClick={sendMessage}
+          disabled={loading}
+          className="bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm"
+        >
           {loading ? "..." : "Send"}
         </button>
       </div>

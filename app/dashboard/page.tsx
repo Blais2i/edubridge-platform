@@ -41,8 +41,16 @@ export default function ChatPage() {
 
         <div className="col-span-3">
           <Sidebar
-            onSelect={(id: string) => setActiveConversation(id)}
-          />
+  activeConversationId={activeConversation}
+  onSelectConversation={(id: string) => setActiveConversation(id)}
+  onNewChat={() => {
+    setActiveConversation(null);
+    setRefreshKey((k) => k + 1);
+  }}
+  refreshKey={refreshKey}
+/>
+
+
         </div>
 
         <div className="col-span-9">

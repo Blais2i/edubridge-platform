@@ -33,18 +33,17 @@ Always make the student feel:
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { question, userId, conversationId } = body;
+    const { question } = await req.json();
 
-    if (!question || !userId || !conversationId) {
+    // ✅ Only require question
+    if (!question) {
       return NextResponse.json({ response: "Missing data" });
     }
 
-    // Load recent conversation messages
+    // Load recent messages (global recent context)
     const { data: history } = await supabase
       .from("messages")
       .select("role, content")
-      .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
       .limit(12);
 
@@ -72,7 +71,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!openaiRes.ok) {
-      return NextResponse.json({ response: "AI failed to respond" });
+      return NextResponse.json({
+        response: "AI failed to respond",
+      });
     }
 
     const json = await openaiRes.json();

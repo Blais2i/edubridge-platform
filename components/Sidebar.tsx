@@ -23,9 +23,13 @@ export default function Sidebar({
 }) {
   const { user } = useUser();
   const router = useRouter();
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  const chatMenuRef = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -43,17 +47,57 @@ export default function Sidebar({
     load();
   }, [user, refreshKey]);
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
+    const handler = (e: MouseEvent) => {
+      if (
+        chatMenuRef.current &&
+        !chatMenuRef.current.contains(e.target as Node)
+      ) {
+        setOpenChatMenuId(null);
+      }
+
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(e.target as Node)
+      ) {
+        setAccountMenuOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const renameChat = async (id: string, currentTitle: string | null) => {
+    const newTitle = window.prompt(
+      "Rename chat",
+      currentTitle || "New chat"
+    );
+
+    if (!newTitle) return;
+
+    await supabase
+      .from("conversations")
+      .update({ title: newTitle })
+      .eq("id", id);
+
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title: newTitle } : c))
+    );
+    setOpenChatMenuId(null);
+  };
+
+  const deleteChat = async (id: string) => {
+    const confirmed = window.confirm("Delete this chat?");
+    if (!confirmed) return;
+
+    await supabase.from("messages").delete().eq("conversation_id", id);
+    await supabase.from("conversations").delete().eq("id", id);
+
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    setOpenChatMenuId(null);
+  };
 
   const handleLogout = async () => {
     const confirmed = window.confirm("Do you want to log out?");
@@ -74,35 +118,71 @@ export default function Sidebar({
         + New chat
       </button>
 
-      {/* Label */}
       <div className="text-sm text-slate-300 mb-2 shrink-0">
         Recent
       </div>
 
-      {/* Scrollable chat list */}
+      {/* Chat list */}
       <div className="flex-1 overflow-y-auto space-y-1 pr-1 sidebar-scrollbar">
         {conversations.map((c) => (
-          <button
+          <div
             key={c.id}
-            onClick={() => onSelectConversation(c.id)}
-            className={`block w-full text-left px-3 py-2 rounded-md text-sm transition ${
+            className={`group relative flex items-center justify-between px-3 py-2 rounded-md text-sm ${
               c.id === activeConversationId
                 ? "bg-white/20"
                 : "hover:bg-white/10"
             }`}
           >
-            {c.title || "New chat"}
-          </button>
+            <button
+              onClick={() => onSelectConversation(c.id)}
+              className="flex-1 text-left truncate"
+            >
+              {c.title || "New chat"}
+            </button>
+
+            {/* Three dots */}
+            <button
+              onClick={() =>
+                setOpenChatMenuId(
+                  openChatMenuId === c.id ? null : c.id
+                )
+              }
+              className="opacity-0 group-hover:opacity-100 px-2"
+            >
+              ⋯
+            </button>
+
+            {/* Chat menu */}
+            {openChatMenuId === c.id && (
+              <div
+                ref={chatMenuRef}
+                className="absolute right-2 top-9 w-32 bg-slate-800 rounded-md shadow-lg overflow-hidden z-10"
+              >
+                <button
+                  onClick={() => renameChat(c.id, c.title)}
+                  className="w-full text-left px-3 py-2 hover:bg-white/10"
+                >
+                  Rename
+                </button>
+                <button
+                  onClick={() => deleteChat(c.id)}
+                  className="w-full text-left px-3 py-2 hover:bg-white/10 text-red-400"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Account section */}
+      {/* Account section (BOTTOM) */}
       <div
-        ref={menuRef}
+        ref={accountMenuRef}
         className="mt-4 pt-4 border-t border-slate-700 relative"
       >
         <button
-          onClick={() => setMenuOpen((v) => !v)}
+          onClick={() => setAccountMenuOpen((v) => !v)}
           className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-white/10"
         >
           <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center font-semibold">
@@ -116,12 +196,11 @@ export default function Sidebar({
           </div>
         </button>
 
-        {/* Dropdown menu */}
-        {menuOpen && (
+        {accountMenuOpen && (
           <div className="absolute bottom-14 left-0 w-full bg-slate-800 rounded-lg shadow-lg overflow-hidden text-sm">
             <button
               onClick={() => {
-                setMenuOpen(false);
+                setAccountMenuOpen(false);
                 router.push("/profile");
               }}
               className="w-full text-left px-4 py-2 hover:bg-white/10"

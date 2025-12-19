@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
-import Image from "next/image";
+import Logo from "@/components/Logo";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,34 +19,24 @@ export default function ChatInterface({
   onConversationCreated,
 }: {
   conversationIdProp: string | null;
-  onConversationCreated: (id: string) => void;
+  onConversationCreated: (id: string | null) => void;
 }) {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
 
-  // IMPORTANT: start with no conversation
-  const [conversationId, setConversationId] = useState<string | null>(
-    conversationIdProp
-  );
-
+  const [conversationId, setConversationId] = useState<string | null>(conversationIdProp);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  /* ---------------------------------------------------
-     Load user
-  --------------------------------------------------- */
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
     });
   }, []);
 
-  /* ---------------------------------------------------
-     Load profile (read only)
-  --------------------------------------------------- */
   useEffect(() => {
     if (!user) return;
 
@@ -63,18 +53,16 @@ export default function ChatInterface({
     loadProfile();
   }, [user]);
 
-  /* ---------------------------------------------------
-     Sync conversation from sidebar selection
-  --------------------------------------------------- */
+  // Reset when parent clears conversationIdProp
   useEffect(() => {
     if (conversationIdProp) {
       setConversationId(conversationIdProp);
+    } else {
+      setConversationId(null);
+      setMessages([]);
     }
   }, [conversationIdProp]);
 
-  /* ---------------------------------------------------
-     Load messages ONLY for existing conversations
-  --------------------------------------------------- */
   useEffect(() => {
     if (!conversationId) return;
 
@@ -91,16 +79,25 @@ export default function ChatInterface({
     loadMessages();
   }, [conversationId]);
 
-  /* ---------------------------------------------------
-     Auto scroll
-  --------------------------------------------------- */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ---------------------------------------------------
-     Send message (THIS is where chat is created)
-  --------------------------------------------------- */
+  async function generateTitleFromFirstMessage(text: string) {
+    try {
+      const res = await fetch("/api/title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await res.json();
+      return data?.title || "New chat";
+    } catch {
+      return "New chat";
+    }
+  }
+
   async function sendMessage() {
     if (!input.trim() || loading || !user) return;
 
@@ -110,7 +107,6 @@ export default function ChatInterface({
 
     let convoId = conversationId;
 
-    // 🔑 Create conversation ONLY on first message
     if (!convoId) {
       const { data } = await supabase
         .from("conversations")
@@ -125,14 +121,14 @@ export default function ChatInterface({
 
       convoId = data.id;
       setConversationId(convoId);
-      onConversationCreated(convoId as string);
+      onConversationCreated(convoId);
+
+      const title = await generateTitleFromFirstMessage(text);
+
+      await supabase.from("conversations").update({ title }).eq("id", convoId);
     }
 
-    const userMessage: Message = {
-      role: "user",
-      content: text,
-    };
-
+    const userMessage: Message = { role: "user", content: text };
     setMessages((prev) => [...prev, userMessage]);
 
     await supabase.from("messages").insert({
@@ -167,65 +163,46 @@ export default function ChatInterface({
     }
   }
 
-  /* ---------------------------------------------------
-     UI
-  --------------------------------------------------- */
-  const firstName =
-    profile?.full_name?.split(" ")[0] || "inshuti";
+  const firstName = profile?.full_name?.split(" ")[0] || "inshuti";
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-md border">
-
-      {/* Header */}
+      {/* Header with clickable logo */}
       <div className="flex items-center gap-3 p-4 border-b">
-        <Image
-          src="/blaise-ai-logo.png"
-          alt="Blaise AI"
-          width={28}
-          height={28}
+        <Logo
+          size={28}
+          onClick={() => {
+            setConversationId(null);
+            setMessages([]);
+            onConversationCreated(null);
+          }}
         />
         <div>
           <h2 className="font-semibold">Blaise AI</h2>
-          <p className="text-xs text-slate-500">
-            Your tutor • Kinyarwanda first
-          </p>
+          <p className="text-xs text-slate-500">Your tutor • Kinyarwanda first</p>
         </div>
       </div>
 
-      {/* Messages / Idle state */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-
-        {/* 🟢 Idle state */}
         {messages.length === 0 && (
-          <div className="h-full flex items-center justify-center text-center text-slate-500">
+          <div className="min-h-full flex items-center justify-center text-center text-slate-500">
             <div>
-              <p className="text-lg font-medium mb-2">
-                Muraho {firstName}.
-              </p>
-              <p>
-                Nditeguye kugufasha uyu munsi.  
-                Andika ikibazo wifuza kwiga.
-              </p>
-              <p className="text-sm mt-3 text-slate-400">
-                I’m ready to learn with you today.
-              </p>
+              <p className="text-lg font-medium mb-2">Muraho {firstName}.</p>
+              <p>Nditeguye kugufasha uyu munsi.  Andika ikibazo wifuza kwiga.</p>
+              <p className="text-sm mt-3 text-slate-400">I’m ready to learn with you today.</p>
             </div>
           </div>
         )}
 
-        {/* Messages */}
         {messages.map((msg, i) => (
           <div
             key={i}
             className={`max-w-xl px-4 py-3 rounded-xl ${
-              msg.role === "assistant"
-                ? "bg-cyan-50 border border-cyan-200"
-                : "bg-gray-100 ml-auto"
+              msg.role === "assistant" ? "bg-cyan-50 border border-cyan-200" : "bg-gray-100 ml-auto"
             }`}
           >
-            <p className="text-sm whitespace-pre-wrap">
-              {msg.content}
-            </p>
+            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
           </div>
         ))}
 
@@ -241,11 +218,7 @@ export default function ChatInterface({
           placeholder="Andika ikibazo..."
           className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none"
         />
-        <button
-          onClick={sendMessage}
-          disabled={loading}
-          className="bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm"
-        >
+        <button onClick={sendMessage} disabled={loading} className="bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm">
           {loading ? "..." : "Send"}
         </button>
       </div>

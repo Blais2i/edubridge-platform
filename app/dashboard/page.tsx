@@ -42,8 +42,8 @@ export default function ChatPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
 
-        {/* Sidebar */}
-        <div className="col-span-3">
+        {/* Sidebar — hidden on mobile */}
+        <div className="hidden md:block md:col-span-3">
           <Sidebar
             activeConversationId={activeConversation}
             onSelectConversation={(id: string) => setActiveConversation(id)}
@@ -55,12 +55,11 @@ export default function ChatPage() {
           />
         </div>
 
-        {/* Chat */}
-        <div className="col-span-9">
+        {/* Chat — full width on mobile */}
+        <div className="col-span-12 md:col-span-9">
           <ChatInterface
             conversationIdProp={activeConversation}
             onConversationCreated={(id: string | null) => setActiveConversation(id)}
-
           />
         </div>
 

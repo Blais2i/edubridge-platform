@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import TopBar from "@/components/TopBar";
 import Sidebar from "@/components/Sidebar";
 import ChatInterface from "@/components/ChatInterface";
-import { useState } from "react";
 import { useUser } from "@/app/context/UserContext";
 
 export default function ChatPage() {
   const { user, loading } = useUser();
 
-  // IMPORTANT: allow both string and null to avoid TS errors
+  // Active conversation (null = idle / new chat)
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
+
+  // Used to force sidebar refresh when needed
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (loading) {
     return (
@@ -39,19 +42,28 @@ export default function ChatPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
 
+        {/* Sidebar */}
         <div className="col-span-3">
           <Sidebar
-            onSelect={(id: string) => setActiveConversation(id)}
+            activeConversationId={activeConversation}
+            onSelectConversation={(id: string) => setActiveConversation(id)}
+            onNewChat={() => {
+              setActiveConversation(null);
+              setRefreshKey((k) => k + 1);
+            }}
+            refreshKey={refreshKey}
           />
         </div>
 
+        {/* Chat */}
         <div className="col-span-9">
           <ChatInterface
             conversationIdProp={activeConversation}
-            onConversationCreated={(id: string) => setActiveConversation(id)}
+            onConversationCreated={(id: string | null) => setActiveConversation(id)}
+
           />
         </div>
-        
+
       </div>
     </div>
   );

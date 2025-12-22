@@ -129,7 +129,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onNewChat}
-          className="mb-4 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg px-3 py-2 text-white font-medium hover:opacity-90 transition"
+          className="mb-4 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg px-3 py-2 text-white font-medium hover:opacity-90 transition w-full text-center"
         >
           + New chat
         </button>
@@ -197,8 +197,8 @@ export default function Sidebar({
             <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center font-semibold">
               {user?.user_metadata?.full_name?.[0]?.toUpperCase() || "U"}
             </div>
-            <div className="text-left">
-              <p className="text-sm font-medium">
+            <div className="text-left truncate">
+              <p className="text-sm font-medium truncate">
                 {user?.user_metadata?.full_name || "Student"}
               </p>
               <p className="text-xs text-slate-400">Account</p>

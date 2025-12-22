@@ -16,7 +16,14 @@ export default function SplashScreen() {
   return (
     <div className="fixed inset-0 bg-white flex items-center justify-center z-9999">
       <div className="animate-pulse">
-        <Logo size={100} />
+        {/* Mobile */}
+        <div className="sm:hidden">
+          <Logo size={80} />
+        </div>
+        {/* Tablet and up */}
+        <div className="hidden sm:block">
+          <Logo size={100} />
+        </div>
       </div>
     </div>
   );

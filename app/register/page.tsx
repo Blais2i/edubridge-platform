@@ -39,8 +39,10 @@ export default function RegisterPage() {
       : generateEmailFromPhone(parentPhone);
 
     try {
+      // Clear any existing session
       await supabase.auth.signOut();
 
+      // ✅ ONLY create auth user
       const { error: signUpError } = await supabase.auth.signUp({
         email: finalEmail,
         password,
@@ -62,6 +64,7 @@ export default function RegisterPage() {
         return;
       }
 
+      // ✅ Profile is created by database trigger
       router.push("/success");
     } catch {
       setError("Registration failed. Try again.");
@@ -70,13 +73,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-50 flex items-center justify-center px-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6 sm:p-8">
+    <div className="min-h-screen bg-linear-to-br from-cyan-50 to-blue-50 flex items-center justify-center px-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
+
         <div className="flex justify-center mb-6">
-          <Logo size={100} />
+          <Logo size={120} />
         </div>
 
-        <h1 className="text-xl sm:text-2xl font-bold text-center mb-2">
+        <h1 className="text-2xl font-bold text-center mb-2">
           Create an account
         </h1>
         <p className="text-center text-gray-500 text-sm mb-6">
@@ -84,42 +88,42 @@ export default function RegisterPage() {
         </p>
 
         <input
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           placeholder="Child full name *"
           value={childName}
           onChange={(e) => setChildName(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           placeholder="Grade (P4, P6, S2, S6) *"
           value={grade}
           onChange={(e) => setGrade(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           placeholder="School name *"
           value={schoolName}
           onChange={(e) => setSchoolName(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           placeholder="Parent phone number *"
           value={parentPhone}
           onChange={(e) => setParentPhone(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           placeholder="Email (optional)"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <select
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
         >
@@ -129,7 +133,7 @@ export default function RegisterPage() {
 
         <input
           type="password"
-          className="w-full border rounded-lg px-3 py-2 sm:py-3 mb-3 text-sm sm:text-base"
+          className="w-full border rounded-lg p-3 mb-3"
           placeholder="Password *"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -142,7 +146,7 @@ export default function RegisterPage() {
         <button
           onClick={handleRegister}
           disabled={loading}
-          className="w-full py-2 sm:py-3 rounded-lg bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition text-sm sm:text-base"
+          className="w-full py-3 rounded-lg bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
         >
           {loading ? "Creating account..." : "Create account"}
         </button>

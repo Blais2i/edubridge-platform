@@ -137,6 +137,8 @@ export default function ChatInterface({
     });
 
     try {
+      console.log("🧵 Using conversation ID (frontend):", convoId);
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -169,7 +171,7 @@ export default function ChatInterface({
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-md border">
-      <div className="flex items-center gap-3 p-4 sm:px-6 border-b">
+      <div className="flex items-center gap-3 p-4 border-b">
         <Logo
           size={28}
           onClick={() => {
@@ -179,12 +181,12 @@ export default function ChatInterface({
           }}
         />
         <div>
-          <h2 className="font-semibold text-base sm:text-lg">Blaise AI</h2>
-          <p className="text-xs sm:text-sm text-slate-500">Your tutor • Kinyarwanda first</p>
+          <h2 className="font-semibold">Blaise AI</h2>
+          <p className="text-xs text-slate-500">Your tutor • Kinyarwanda first</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-w-screen-sm mx-auto w-full">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
           <div className="min-h-full flex items-center justify-center text-center text-slate-500">
             <div>
@@ -198,7 +200,7 @@ export default function ChatInterface({
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`w-full px-4 py-3 rounded-xl ${
+            className={`max-w-xl px-4 py-3 rounded-xl ${
               msg.role === "assistant" ? "bg-cyan-50 border border-cyan-200" : "bg-gray-100 ml-auto"
             }`}
           >
@@ -209,7 +211,7 @@ export default function ChatInterface({
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t px-4 py-4 flex flex-col sm:flex-row gap-3 max-w-screen-sm mx-auto w-full">
+      <div className="border-t p-4 flex gap-3">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

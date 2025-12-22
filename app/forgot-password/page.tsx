@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "http://localhost:3000/reset-password"
+      redirectTo: "https://blaiseai-self.vercel.app/reset-password"
     });
 
     setLoading(false);

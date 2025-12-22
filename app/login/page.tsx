@@ -31,20 +31,46 @@ export default function LoginPage() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
       <h1 className="text-2xl font-semibold mb-4">Sign in</h1>
 
-      <input className="input" placeholder="Email"
-        value={email} onChange={(e) => setEmail(e.target.value)}
+      <input
+        className="input"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
 
-      <input className="input" type="password" placeholder="Password"
-        value={password} onChange={(e) => setPassword(e.target.value)}
+      <input
+        className="input"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
 
-      <button onClick={handleLogin}
-        className="w-full bg-blue-600 text-white py-2 rounded">
+      <button
+        onClick={handleLogin}
+        className="w-full bg-blue-600 text-white py-2 rounded"
+      >
         Login
       </button>
+
+      {/* ✅ Added links (nothing else changed) */}
+      <div className="flex justify-between items-center mt-4 text-sm">
+        <a
+          href="/forgot-password"
+          className="text-blue-600 hover:underline"
+        >
+          Forgot password?
+        </a>
+
+        <a
+          href="/register"
+          className="text-blue-600 font-semibold hover:underline"
+        >
+          Don’t have an account?
+        </a>
+      </div>
     </div>
   );
 }

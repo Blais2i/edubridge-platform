@@ -15,6 +15,9 @@ export default function ChatPage() {
   // Used to force sidebar refresh when needed
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // NEW: mobile sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -37,26 +40,28 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
-      <TopBar />
+    <div className="min-h-screen bg-linear-to-b from-white to-gray-50 flex flex-col">
+      
+      {/* Top bar with mobile menu button */}
+      <TopBar onMenuClick={() => setSidebarOpen(true)} />
 
-      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+      <div className="flex flex-1 max-w-7xl mx-auto w-full px-4 py-6 gap-6">
 
-        {/* Sidebar — hidden on mobile */}
-        <div className="hidden md:block md:col-span-3">
-          <Sidebar
-            activeConversationId={activeConversation}
-            onSelectConversation={(id: string) => setActiveConversation(id)}
-            onNewChat={() => {
-              setActiveConversation(null);
-              setRefreshKey((k) => k + 1);
-            }}
-            refreshKey={refreshKey}
-          />
-        </div>
+        {/* Sidebar (desktop + mobile overlay handled internally) */}
+        <Sidebar
+          activeConversationId={activeConversation}
+          onSelectConversation={(id: string) => setActiveConversation(id)}
+          onNewChat={() => {
+            setActiveConversation(null);
+            setRefreshKey((k) => k + 1);
+          }}
+          refreshKey={refreshKey}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
 
-        {/* Chat — full width on mobile */}
-        <div className="col-span-12 md:col-span-9">
+        {/* Chat area */}
+        <div className="flex-1">
           <ChatInterface
             conversationIdProp={activeConversation}
             onConversationCreated={(id: string | null) => setActiveConversation(id)}

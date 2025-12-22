@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import ChatInterface from "@/components/ChatInterface";
 
 export default function ChatPage() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [refreshSidebar, setRefreshSidebar] = useState(0);
   const [chatInstanceKey, setChatInstanceKey] = useState(0); // forces ChatInterface re-mount on new chat
@@ -14,19 +15,21 @@ export default function ChatPage() {
       {/* Sidebar */}
       <div className="w-64 flex-shrink-0 overflow-y-auto p-6">
         <Sidebar
-          activeConversationId={activeConversationId}
-          onSelectConversation={(id) => {
-            setActiveConversationId(id);
-            // When selecting an existing conversation, keep the same instance
-          }}
-          onNewChat={() => {
-            // Start fresh: clear active conversation and bump instance key
-            setActiveConversationId(null);
-            setRefreshSidebar((v) => v + 1);
-            setChatInstanceKey((k) => k + 1);
-          }}
-          refreshKey={refreshSidebar}
-        />
+  activeConversationId={activeConversationId}
+  onSelectConversation={(id) => {
+    setActiveConversationId(id);
+    setSidebarOpen(false);
+  }}
+  onNewChat={() => {
+    setActiveConversationId(null);
+    setRefreshSidebar((v) => v + 1);
+    setSidebarOpen(false);
+  }}
+  refreshKey={refreshSidebar}
+  isOpen={sidebarOpen}
+  onClose={() => setSidebarOpen(false)}
+/>
+
       </div>
 
       {/* Chat Interface */}

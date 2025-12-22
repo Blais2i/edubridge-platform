@@ -9,13 +9,10 @@ import { useUser } from "@/app/context/UserContext";
 export default function ChatPage() {
   const { user, loading } = useUser();
 
-  // Active conversation (null = idle / new chat)
-  const [activeConversation, setActiveConversation] = useState<string | null>(null);
-
-  // Used to force sidebar refresh when needed
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // NEW: mobile sidebar state
+  // ✅ NEW: sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
@@ -40,20 +37,23 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50 flex flex-col">
-      
-      {/* Top bar with mobile menu button */}
+    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+      {/* Pass menu button control to TopBar later if you want */}
       <TopBar onMenuClick={() => setSidebarOpen(true)} />
 
-      <div className="flex flex-1 max-w-7xl mx-auto w-full px-4 py-6 gap-6">
 
-        {/* Sidebar (desktop + mobile overlay handled internally) */}
+      <div className="flex h-[calc(100vh-56px)]">
+        {/* Sidebar */}
         <Sidebar
-          activeConversationId={activeConversation}
-          onSelectConversation={(id: string) => setActiveConversation(id)}
+          activeConversationId={activeConversationId}
+          onSelectConversation={(id) => {
+            setActiveConversationId(id);
+            setSidebarOpen(false); // close on mobile after selection
+          }}
           onNewChat={() => {
-            setActiveConversation(null);
+            setActiveConversationId(null);
             setRefreshKey((k) => k + 1);
+            setSidebarOpen(false);
           }}
           refreshKey={refreshKey}
           isOpen={sidebarOpen}
@@ -63,11 +63,12 @@ export default function ChatPage() {
         {/* Chat area */}
         <div className="flex-1">
           <ChatInterface
-            conversationIdProp={activeConversation}
-            onConversationCreated={(id: string | null) => setActiveConversation(id)}
+            conversationIdProp={activeConversationId}
+            onConversationCreated={(id: string | null) =>
+              setActiveConversationId(id)
+            }
           />
         </div>
-
       </div>
     </div>
   );

@@ -24,12 +24,16 @@ export default function ChatInterface({
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
 
-  const [conversationId, setConversationId] = useState<string | null>(conversationIdProp);
+  const [conversationId, setConversationId] = useState<string | null>(
+    conversationIdProp
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  /* ---------------- USER ---------------- */
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -52,6 +56,8 @@ export default function ChatInterface({
 
     loadProfile();
   }, [user]);
+
+  /* ---------------- CONVERSATION ---------------- */
 
   useEffect(() => {
     if (conversationIdProp) {
@@ -78,9 +84,14 @@ export default function ChatInterface({
     loadMessages();
   }, [conversationId]);
 
+  /* ---------------- AUTO SCROLL (FIXED) ---------------- */
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!bottomRef.current) return;
+    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  /* ---------------- HELPERS ---------------- */
 
   async function generateTitleFromFirstMessage(text: string) {
     try {
@@ -96,6 +107,8 @@ export default function ChatInterface({
       return "New chat";
     }
   }
+
+  /* ---------------- SEND MESSAGE ---------------- */
 
   async function sendMessage() {
     if (!input.trim() || loading || !user) return;
@@ -137,8 +150,6 @@ export default function ChatInterface({
     });
 
     try {
-      console.log("🧵 Using conversation ID (frontend):", convoId);
-
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -169,8 +180,11 @@ export default function ChatInterface({
 
   const firstName = profile?.full_name?.split(" ")[0] || "inshuti";
 
+  /* ---------------- UI ---------------- */
+
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-md border">
+      {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b">
         <Logo
           size={28}
@@ -182,17 +196,26 @@ export default function ChatInterface({
         />
         <div>
           <h2 className="font-semibold">Blaise AI</h2>
-          <p className="text-xs text-slate-500">Your tutor • Kinyarwanda first</p>
+          <p className="text-xs text-slate-500">
+            Your tutor • Kinyarwanda first
+          </p>
         </div>
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.length === 0 && (
+        {messages.length === 0 && !loading && (
           <div className="min-h-full flex items-center justify-center text-center text-slate-500">
             <div>
-              <p className="text-lg font-medium mb-2">Muraho {firstName}.</p>
-              <p>Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.</p>
-              <p className="text-sm mt-3 text-slate-400">I’m ready to learn with you today.</p>
+              <p className="text-lg font-medium mb-2">
+                Muraho {firstName}.
+              </p>
+              <p>
+                Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.
+              </p>
+              <p className="text-sm mt-3 text-slate-400">
+                I’m ready to learn with you today.
+              </p>
             </div>
           </div>
         )}
@@ -201,16 +224,30 @@ export default function ChatInterface({
           <div
             key={i}
             className={`max-w-xl px-4 py-3 rounded-xl ${
-              msg.role === "assistant" ? "bg-cyan-50 border border-cyan-200" : "bg-gray-100 ml-auto"
+              msg.role === "assistant"
+                ? "bg-cyan-50 border border-cyan-200"
+                : "bg-gray-100 ml-auto"
             }`}
           >
             <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
           </div>
         ))}
 
+        {/* Thinking indicator */}
+        {loading && (
+          <div className="max-w-xl px-4 py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-500 italic">
+            Blaise AI irimo gutekereza…
+            <br />
+            <span className="text-xs">
+              Blaise AI is thinking…
+            </span>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
+      {/* Input */}
       <div className="border-t p-4 flex gap-3">
         <input
           value={input}

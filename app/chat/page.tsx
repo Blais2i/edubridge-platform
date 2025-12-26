@@ -13,7 +13,7 @@ export default function ChatPage() {
   const [chatInstanceKey, setChatInstanceKey] = useState(0);
 
   return (
-    <div className="flex h-screen bg-white sm:bg-gradient-to-b sm:from-white sm:to-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-white sm:bg-linear-to-b sm:from-white sm:to-gray-50 overflow-hidden">
 
       {/* Left rail - Hidden on mobile, visible on desktop */}
       <div className="hidden sm:block">

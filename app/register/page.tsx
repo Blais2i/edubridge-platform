@@ -73,57 +73,57 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-cyan-50 to-blue-50 flex items-center justify-center px-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-white sm:bg-linear-to-br sm:from-cyan-50 sm:to-blue-50 flex items-center justify-center px-4 py-6">
+      <div className="bg-white w-full max-w-md rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl p-6 sm:p-8 border border-gray-100">
 
         <div className="flex justify-center mb-6">
-          <Logo size={120} />
+          <Logo size={100} />
         </div>
 
-        <h1 className="text-2xl font-bold text-center mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-center mb-2 text-gray-900">
           Create an account
         </h1>
-        <p className="text-center text-gray-500 text-sm mb-6">
+        <p className="text-center text-gray-600 text-sm mb-6">
           Help your child learn with Blaise AI
         </p>
 
         <input
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           placeholder="Child full name *"
           value={childName}
           onChange={(e) => setChildName(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           placeholder="Grade (P4, P6, S2, S6) *"
           value={grade}
           onChange={(e) => setGrade(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           placeholder="School name *"
           value={schoolName}
           onChange={(e) => setSchoolName(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           placeholder="Parent phone number *"
           value={parentPhone}
           onChange={(e) => setParentPhone(e.target.value)}
         />
 
         <input
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           placeholder="Email (optional)"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <select
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
         >
@@ -133,27 +133,27 @@ export default function RegisterPage() {
 
         <input
           type="password"
-          className="w-full border rounded-lg p-3 mb-3"
+          className="w-full border border-gray-300 bg-white rounded-lg p-3 mb-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           placeholder="Password *"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
         {error && (
-          <p className="text-red-600 text-sm mb-3">{error}</p>
+          <p className="text-red-600 text-sm mb-3 bg-red-50 p-2 rounded">{error}</p>
         )}
 
         <button
           onClick={handleRegister}
           disabled={loading}
-          className="w-full py-3 rounded-lg bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
+          className="w-full py-3 rounded-lg bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Creating account..." : "Create account"}
         </button>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
+        <p className="text-center text-sm text-gray-700 mt-4">
           Already have an account?{" "}
-          <a href="/login" className="text-cyan-700 font-semibold">
+          <a href="/login" className="text-cyan-600 font-semibold hover:text-cyan-700">
             Login
           </a>
         </p>

@@ -183,9 +183,9 @@ export default function ChatInterface({
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl shadow-md border">
+    <div className="flex flex-col h-full bg-white rounded-none sm:rounded-xl sm:shadow-md sm:border">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b">
+      <div className="flex items-center gap-3 p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
         <Logo
           size={28}
           onClick={() => {
@@ -195,7 +195,7 @@ export default function ChatInterface({
           }}
         />
         <div>
-          <h2 className="font-semibold">Blaise AI</h2>
+          <h2 className="font-semibold text-sm sm:text-base">Blaise AI</h2>
           <p className="text-xs text-slate-500">
             Your tutor • Kinyarwanda first
           </p>
@@ -203,18 +203,18 @@ export default function ChatInterface({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
         {messages.length === 0 && !loading && (
-          <div className="min-h-full flex items-center justify-center text-center text-slate-500">
+          <div className="min-h-full flex items-center justify-center text-center text-slate-500 px-4">
             <div>
-              <p className="text-lg font-medium mb-2">
+              <p className="text-base sm:text-lg font-medium mb-2">
                 Muraho {firstName}.
               </p>
-              <p>
+              <p className="text-sm sm:text-base">
                 Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.
               </p>
-              <p className="text-sm mt-3 text-slate-400">
-                I’m ready to learn with you today.
+              <p className="text-xs sm:text-sm mt-3 text-slate-400">
+                I'm ready to learn with you today.
               </p>
             </div>
           </div>
@@ -223,19 +223,19 @@ export default function ChatInterface({
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`max-w-xl px-4 py-3 rounded-xl ${
+            className={`w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base ${
               msg.role === "assistant"
                 ? "bg-cyan-50 border border-cyan-200"
-                : "bg-gray-100 ml-auto"
+                : "bg-gray-100 sm:ml-auto"
             }`}
           >
-            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
           </div>
         ))}
 
         {/* Thinking indicator */}
         {loading && (
-          <div className="max-w-xl px-4 py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-500 italic">
+          <div className="w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-500 italic">
             Blaise AI irimo gutekereza…
             <br />
             <span className="text-xs">
@@ -247,19 +247,19 @@ export default function ChatInterface({
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t p-4 flex gap-3">
+      {/* Input - Fixed at bottom on mobile */}
+      <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3 bg-white sticky bottom-0">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Andika ikibazo..."
-          className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none"
+          className="flex-1 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         <button
           onClick={sendMessage}
           disabled={loading}
-          className="bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm"
+          className="bg-cyan-500 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform"
         >
           {loading ? "..." : "Send"}
         </button>

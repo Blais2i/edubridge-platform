@@ -183,7 +183,7 @@ export default function ChatInterface({
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-none sm:rounded-xl sm:shadow-md sm:border">
+    <div className="flex flex-col h-full bg-white rounded-none sm:rounded-xl sm:shadow-md sm:border overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
         <Logo
@@ -203,7 +203,7 @@ export default function ChatInterface({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-white">
         {messages.length === 0 && !loading && (
           <div className="min-h-full flex items-center justify-center text-center text-slate-500 px-4">
             <div>
@@ -223,10 +223,10 @@ export default function ChatInterface({
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base ${
+            className={`w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base shadow-sm ${
               msg.role === "assistant"
-                ? "bg-cyan-50 border border-cyan-200"
-                : "bg-gray-100 sm:ml-auto"
+                ? "bg-cyan-50 border border-cyan-200 text-slate-800"
+                : "bg-gray-100 sm:ml-auto text-slate-900 border border-gray-200"
             }`}
           >
             <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -235,7 +235,7 @@ export default function ChatInterface({
 
         {/* Thinking indicator */}
         {loading && (
-          <div className="w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-500 italic">
+          <div className="w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-600 italic shadow-sm">
             Blaise AI irimo gutekereza…
             <br />
             <span className="text-xs">

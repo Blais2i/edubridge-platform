@@ -195,8 +195,8 @@ export default function ChatInterface({
           }}
         />
         <div>
-          <h2 className="font-semibold text-sm sm:text-base">Blaise AI</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="font-semibold text-sm sm:text-base text-gray-900">Blaise AI</h2>
+          <p className="text-xs text-gray-600">
             Your tutor • Kinyarwanda first
           </p>
         </div>
@@ -207,13 +207,13 @@ export default function ChatInterface({
         {messages.length === 0 && !loading && (
           <div className="min-h-full flex items-center justify-center text-center text-slate-500 px-4">
             <div>
-              <p className="text-base sm:text-lg font-medium mb-2">
+              <p className="text-base sm:text-lg font-medium mb-2 text-gray-800">
                 Muraho {firstName}.
               </p>
-              <p className="text-sm sm:text-base">
+              <p className="text-sm sm:text-base text-gray-700">
                 Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.
               </p>
-              <p className="text-xs sm:text-sm mt-3 text-slate-400">
+              <p className="text-xs sm:text-sm mt-3 text-gray-500">
                 I'm ready to learn with you today.
               </p>
             </div>
@@ -248,13 +248,14 @@ export default function ChatInterface({
       </div>
 
       {/* Input - Fixed at bottom on mobile */}
-      <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3 bg-white sticky bottom-0">
+      <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3 bg-white sticky bottom-0 z-10">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Andika ikibazo..."
-          className="flex-1 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          style={{ color: '#111827' }}
+          className="flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
         />
         <button
           onClick={sendMessage}

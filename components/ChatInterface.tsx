@@ -223,10 +223,10 @@ export default function ChatInterface({
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base shadow-sm ${
+            className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base shadow-sm ${
               msg.role === "assistant"
-                ? "bg-cyan-50 border border-cyan-200 text-slate-800"
-                : "bg-gray-100 sm:ml-auto text-slate-900 border border-gray-200"
+                ? "w-full bg-cyan-50 border border-cyan-200 text-slate-800"
+                : "max-w-[85%] ml-auto bg-gray-100 text-slate-900 border border-gray-200"
             }`}
           >
             <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>

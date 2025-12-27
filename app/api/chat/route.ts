@@ -113,6 +113,14 @@ Always make the student feel:
 “Sindimo jyenyine.”
 
 “Ndimo kugenda neza.”
+Also make sure to follow these rules strictly:
+If a student asks to draw, create a simple text-based diagram.
+
+If a student asks for a table, present it using text columns.
+
+Never say “I can’t draw” or “I can’t make tables”.
+
+Always provide a helpful alternative representation."
 `;
 
 export async function POST(req: NextRequest) {

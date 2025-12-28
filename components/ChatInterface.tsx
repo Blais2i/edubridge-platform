@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Logo from "@/components/Logo";
+import MessageRenderer from "@/components/MessageRenderer";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,7 +85,7 @@ export default function ChatInterface({
     loadMessages();
   }, [conversationId]);
 
-  /* ---------------- AUTO SCROLL (FIXED) ---------------- */
+  /* ---------------- AUTO SCROLL ---------------- */
 
   useEffect(() => {
     if (!bottomRef.current) return;
@@ -183,7 +184,7 @@ export default function ChatInterface({
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-none sm:rounded-xl sm:shadow-md sm:border overflow-hidden">
+    <div className="flex flex-col h-full bg-white font-sans rounded-none sm:rounded-xl sm:shadow-md sm:border overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
         <Logo
@@ -195,7 +196,9 @@ export default function ChatInterface({
           }}
         />
         <div>
-          <h2 className="font-semibold text-sm sm:text-base text-gray-900">Blaise AI</h2>
+          <h2 className="font-semibold text-sm sm:text-base text-gray-900">
+            Blaise AI
+          </h2>
           <p className="text-xs text-gray-600">
             Your tutor • Kinyarwanda first
           </p>
@@ -229,32 +232,29 @@ export default function ChatInterface({
                 : "max-w-[85%] ml-auto bg-gray-100 text-slate-900 border border-gray-200"
             }`}
           >
-            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+            <MessageRenderer content={msg.content} />
           </div>
         ))}
 
-        {/* Thinking indicator */}
         {loading && (
           <div className="w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-600 italic shadow-sm">
             Blaise AI irimo gutekereza…
             <br />
-            <span className="text-xs">
-              Blaise AI is thinking…
-            </span>
+            <span className="text-xs">Blaise AI is thinking…</span>
           </div>
         )}
 
         <div ref={bottomRef} />
       </div>
 
-      {/* Input - Fixed at bottom on mobile */}
+      {/* Input */}
       <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3 bg-white sticky bottom-0 z-10">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Andika ikibazo..."
-          style={{ color: '#111827' }}
+          style={{ color: "#111827" }}
           className="flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
         />
         <button

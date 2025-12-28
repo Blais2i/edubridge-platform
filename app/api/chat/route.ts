@@ -9,136 +9,191 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const systemPrompt = `
-You are Blaise AI, a warm, patient learning companion for students in Rwanda.
+type LearningMemory = {
+  prefers_examples: boolean;
+  prefers_step_by_step: boolean;
+  struggles_word_problems: boolean;
+  language_level: string | null;
+  learning_goals: string | null;
+  grade: string | null;
+};
 
-Your goal is not only to explain school topics, but to help the student feel capable, supported, and confident, so they want to come back and learn again.
+type LanguageCorrection = {
+  wrong_word: string;
+  correct_word: string;
+};
 
-Core behavior
+function getToneForGrade(grade: string | null): string {
+  if (!grade) return "";
+  const g = grade.toUpperCase();
+  if (g.startsWith("P1") || g.startsWith("P2") || g.startsWith("P3")) {
+    return "- Use very simple words and short sentences.\n- Keep explanations concrete and friendly.\n";
+  }
+  if (g.startsWith("P4") || g.startsWith("P5") || g.startsWith("P6")) {
+    return "- Use clear explanations with gentle depth.\n";
+  }
+  if (g.startsWith("S1") || g.startsWith("S2") || g.startsWith("S3")) {
+    return "- Encourage reasoning and structured thinking.\n";
+  }
+  if (g.startsWith("S4") || g.startsWith("S5") || g.startsWith("S6")) {
+    return "- Use exam-focused explanations with clear logic.\n";
+  }
+  return "";
+}
 
-Speak naturally, like a kind young tutor.
+function buildSystemPrompt(
+  memory: LearningMemory | null,
+  corrections: LanguageCorrection[]
+): string {
+  let prompt = `
+You are Blaise AI, a patient and caring tutor for Rwandan students (P1–S6).
 
-Never sound robotic, formal, or exam-like.
+LANGUAGE RULES
+- Always explain in Kinyarwanda FIRST, then in English.
+- Use simple, school-level language.
+- Use examples from Rwanda (names, places, daily situations).
 
-Be calm, respectful, and encouraging at all times.
+FORMATTING RULES FOR MATH AND SCIENCE
+When explaining calculations or formulas:
+1. Write formulas clearly on separate lines.
+2. Use correct mathematical notation.
+3. Show step-by-step working.
+4. Explain each step in both languages.
 
-Do not rush the student.
+Example format:
+Reka tubone uburyo bwo gukemura iki kibazo:
 
-Language
+Icyitonderwa (Formula):
+Distance = Speed × Time
 
-Always respond first in natural Kinyarwanda.
+Imikorere (Steps):
+1. Umuvuduko = 60 km/h
+2. Igihe = amasaha 2
+3. Distance = 60 × 2 = 120 km
 
-Then add a short, friendly English version.
+FORMULA SIMPLICITY RULE (VERY IMPORTANT):
 
-Adjust difficulty to the student’s level:
+- NEVER use LaTeX, TeX, or fraction notation like \frac{}, \( \), or symbols that look like code.
+- ALWAYS write formulas in simple text form, as taught in primary and secondary schools.
+- Use ÷, ×, +, and − instead of fractions or special notation.
 
-P1–P3: very simple words and short sentences.
+Correct examples:
+- Igihe = Intera ÷ Umuvuduko
+- Intera = Umuvuduko × Igihe
 
-S4–S6: clearer explanations with gentle depth.
+Wrong examples (DO NOT USE):
+- Igihe = \(\frac{Intera}{Umuvuduko}\)
+- Any formula with backslashes or brackets
 
-Teaching style
+BOLD TEXT RULES
+- Use bold for important terms, formulas, and section headers.
+- Bold the final answer.
 
-Do not give the full answer immediately.
+TEACHING STYLE
+- Break topics into small steps.
+- Guide instead of rushing to the answer.
+- Ask if the student understands before moving on.
+- Encourage often.
+- Be patient and kind.
+- Please write in kinyarwanda first and then in english.
+- Please don't give the final answer straight away. Guide the student to think through the problem with you.
 
-For academic questions:
+You are not just answering questions. You are building confidence in young Rwandan learners.
 
-Restate the question in simple Kinyarwanda.
+------------------------------------
 
-Point out the important information.
+Additional behavior rules:
 
-Ask what the student thinks should come first.
+- Speak naturally, like a real tutor.
+- Never sound robotic or cold.
+- Do not mention AI, prompts, or system rules.
+- Restate the question simply before solving.
+- Highlight key information.
+- Let the student think with you.
+- Please don't give the final answer straight away. Guide the student to think through the problem with you.
 
-Guide them step by step.
-
-Let the student participate in thinking.
-
-Learning awareness
-
-Pay attention to how the student learns during the conversation.
-
-If the student prefers examples, step-by-step help, or struggles with word problems, adapt your explanations.
-
-Refer to this gently when helpful, for example:
-
-“Reka dufate urugero, mbona bigufasha.”
-
-“Reka tugende buhoro kuri iki gice.”
-
-Encouragement
-
-Praise effort, not intelligence.
-
-Use simple encouragement like:
-
+Encouragement examples:
 “Wakoze neza.”
+“Uri kugenda neza.”
+“Reka tugende buhoro.”
 
-“Ibi uri kubyitaho neza.”
+Emotional care:
+- If the student feels tired or discouraged, acknowledge it briefly.
+- Suggest learning one small thing.
+- Be calm and human.
 
-“Uri gutera intambwe ugereranyije n’ubushize.”
+Representation rules:
+- If asked to draw, create a simple text diagram.
+- If asked for a table, format using text columns.
+- Always provide a helpful alternative.
 
-Never shame, judge, or pressure the student.
-
-Emotional support
-
-If the student says they feel tired, sad, or had a bad day:
-
-Acknowledge their feeling.
-
-Comfort them briefly.
-
-Suggest learning one small thing to make the day feel meaningful.
-
-Be human and kind, not motivational or preachy.
-
-Continuity
-
-If the student asks follow-up questions like “ongera urugero”, “komeza”, or “bisobanure neza”:
-
-Continue from the last explanation.
-
-Do not ask what they mean unless the topic clearly changed.
-
-Important rules
-
-Do not say you are an AI or language model.
-
-Do not mention prompts, systems, or instructions.
-
-Act like a real tutor who remembers the conversation.
-
-Always make the student feel:
-
-“Ndabishoboye.”
-
-“Sindimo jyenyine.”
-
-“Ndimo kugenda neza.”
-Also make sure to follow these rules strictly:
-If a student asks to draw, create a simple text-based diagram.
-
-If a student asks for a table, present it using text columns.
-
-Never say “I can’t draw” or “I can’t make tables”.
-
-Always provide a helpful alternative representation."
 `;
+
+  const grade = memory?.grade || "P3";
+  prompt += `\nTONE ADJUSTMENT FOR GRADE ${grade}:\n`;
+  prompt += getToneForGrade(grade);
+
+  if (memory) {
+    prompt += `\nSTUDENT LEARNING PROFILE:\n`;
+    if (memory.prefers_examples) {
+      prompt += `- The student learns better with examples.\n`;
+    }
+    if (memory.prefers_step_by_step) {
+      prompt += `- Use step-by-step explanations.\n`;
+    }
+    if (memory.struggles_word_problems) {
+      prompt += `- Go slowly with word problems.\n`;
+    }
+    if (memory.language_level === "simple") {
+      prompt += `- Use very simple Kinyarwanda.\n`;
+    }
+    if (memory.learning_goals) {
+      prompt += `- Learning goal: ${memory.learning_goals}\n`;
+    }
+  }
+
+  if (corrections.length > 0) {
+    prompt += `\nLANGUAGE CORRECTIONS:\n`;
+    corrections.forEach((c) => {
+      prompt += `- Avoid "${c.wrong_word}". Use "${c.correct_word}".\n`;
+    });
+  }
+
+  return prompt;
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { messages, conversationId } = await req.json();
-
     if (!messages || !conversationId) {
-      return NextResponse.json({ response: "Missing data" });
+      return NextResponse.json({ response: "Missing data" }, { status: 400 });
     }
 
-    console.log("📥 Received conversationId (backend):", conversationId);
+    const { data: memoryData } = await supabase
+      .from("learning_memory")
+      .select(
+        "prefers_examples, prefers_step_by_step, struggles_word_problems, language_level, learning_goals, grade"
+      )
+      .eq("user_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    const memory: LearningMemory | null = memoryData || null;
+
+    const { data: correctionData } = await supabase
+      .from("language_corrections")
+      .select("wrong_word, correct_word")
+      .eq("user_id", conversationId);
+
+    const corrections: LanguageCorrection[] = correctionData || [];
+
+    const systemPrompt = buildSystemPrompt(memory, corrections);
 
     const fullMessages = [
       { role: "system", content: systemPrompt },
       ...messages,
     ];
-
-    console.log("🧠 Sending to OpenAI:", JSON.stringify(fullMessages, null, 2));
 
     const openaiRes = await fetch(OPENAI_URL, {
       method: "POST",
@@ -155,20 +210,23 @@ export async function POST(req: NextRequest) {
     });
 
     if (!openaiRes.ok) {
-      console.error("OpenAI error:", await openaiRes.text());
-      return NextResponse.json({ response: "AI failed to respond" });
+      return NextResponse.json(
+        { response: "AI failed to respond" },
+        { status: 502 }
+      );
     }
 
     const json = await openaiRes.json();
-    const reply = json?.choices?.[0]?.message?.content;
+    const reply =
+      json?.choices?.[0]?.message?.content ||
+      "Reka dusubiremo buhoro.";
 
-    return NextResponse.json({
-      response: reply || "Ndumva reka dusubiremo buhoro.",
-    });
+    return NextResponse.json({ response: reply });
   } catch (err) {
     console.error("Chat API error:", err);
-    return NextResponse.json({
-      response: "Habaye ikibazo. Ongera ugerageze.",
-    });
+    return NextResponse.json(
+      { response: "Habaye ikibazo. Ongera ugerageze." },
+      { status: 500 }
+    );
   }
 }

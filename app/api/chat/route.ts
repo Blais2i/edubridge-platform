@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
         model: MODEL,
         messages: fullMessages,
         temperature: 0.6,
-        max_tokens: 600,
+        max_tokens: 800,
       }),
     });
 

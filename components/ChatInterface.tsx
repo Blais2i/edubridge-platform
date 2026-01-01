@@ -348,10 +348,10 @@ Please upload a photo of the page you want help with.`,
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="text-center">
-            <p className="font-semibold text-lg mb-2">Muraho {firstName}.</p>
-            <p className="text-gray-600">Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.</p>
-            <p className="text-sm text-gray-500 mt-1">I'm ready to learn with you today.</p>
+          <div className="text-center px-4">
+            <p className="font-bold text-xl mb-3 text-gray-900">Muraho {firstName}.</p>
+            <p className="text-gray-700 font-medium text-base leading-relaxed">Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.</p>
+            <p className="text-sm text-gray-600 mt-2 font-normal">I'm ready to learn with you today.</p>
           </div>
         )}
 
@@ -360,9 +360,10 @@ Please upload a photo of the page you want help with.`,
             key={i}
             className={`rounded-xl p-3 ${
               msg.role === "assistant"
-                ? "bg-cyan-50 border"
-                : "bg-gray-100 ml-auto max-w-[85%]"
+                ? "bg-cyan-50 border text-gray-900"
+                : "bg-gray-100 ml-auto max-w-[85%] text-gray-900"
             }`}
+            style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
           >
             {msg.imageUrl && (
               <div className="mb-2">
@@ -395,7 +396,7 @@ Please upload a photo of the page you want help with.`,
         ))}
 
         {loading && (
-          <p className="italic text-sm text-gray-500">
+          <p className="italic text-base text-gray-700 font-medium">
             Blaise AI irimo gutekereza…
           </p>
         )}
@@ -425,7 +426,8 @@ Please upload a photo of the page you want help with.`,
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Andika ikibazo..."
-          className="flex-1 border rounded px-3 py-2"
+          className="flex-1 border rounded px-3 py-2 text-base text-gray-900"
+          style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
         />
 
         <button

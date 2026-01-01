@@ -34,7 +34,6 @@ export default function ChatPageContent() {
   }, [activeConversationId, router]);
 
   /* ---------------- Sidebar control ---------------- */
-
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((v) => !v);
   }, []);
@@ -44,7 +43,6 @@ export default function ChatPageContent() {
   }, []);
 
   /* ---------------- Helpers ---------------- */
-
   const startNewChat = () => {
     setActiveConversationId(null);
     setChatInstanceKey((v) => v + 1);
@@ -91,21 +89,41 @@ export default function ChatPageContent() {
       {/* Chat area */}
       <div className="flex-1 flex flex-col p-0 sm:p-6 overflow-hidden">
         {/* Mobile header */}
-        <div className="sm:hidden flex items-center gap-3 p-3 bg-white border-b sticky top-0 z-30">
+        <div className="sm:hidden flex items-center gap-3 p-3 bg-white border-b shadow-sm sticky top-0 z-30">
+          {/* Sidebar toggle button */}
           <button
             onClick={toggleSidebar}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg"
             aria-label="Toggle menu"
           >
-            ☰
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-7 h-7"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
 
+          {/* New chat button */}
           <button
             onClick={startNewChat}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg"
             aria-label="New chat"
           >
-            +
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-7 h-7"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
           </button>
         </div>
 

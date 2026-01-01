@@ -336,11 +336,11 @@ Please upload a photo of the page you want help with.`,
 
   return (
     <div className="flex flex-col h-full bg-white border rounded-xl overflow-hidden">
-      <div className="flex items-center gap-3 p-4 border-b">
-        <Logo size={28} />
+      <div className="flex items-center gap-3 p-4 border-b bg-white">
+        <Logo size={32} />
         <div>
-          <h2 className="font-semibold">Blaise AI</h2>
-          <p className="text-xs text-gray-600">
+          <h2 className="font-bold text-lg text-gray-900" style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}>Blaise AI</h2>
+          <p className="text-sm text-gray-700 font-medium" style={{ WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}>
             {conversationId ? "Your tutor • Kinyarwanda first" : "Kinyarwanda first"}
           </p>
         </div>

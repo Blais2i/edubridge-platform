@@ -31,6 +31,9 @@ export default function Sidebar({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactMessage, setContactMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   const chatMenuRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
@@ -94,6 +97,36 @@ export default function Sidebar({
 
     await supabase.auth.signOut();
     router.push("/login");
+  };
+
+  const handleContactSubmit = async () => {
+    if (!contactMessage.trim() || sendingMessage) return;
+
+    setSendingMessage(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: user?.user_metadata?.full_name || "Anonymous",
+          email: user?.email || "no-email@provided.com",
+          message: contactMessage,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Message sent successfully! We'll get back to you soon.");
+        setContactMessage("");
+        setContactModalOpen(false);
+      } else {
+        alert("Failed to send message. Please try again.");
+      }
+    } catch (error) {
+      alert("An error occurred. Please try again.");
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   return (
@@ -212,21 +245,79 @@ export default function Sidebar({
                   setAccountMenuOpen(false);
                   router.push("/profile");
                 }}
-                className="w-full text-left px-4 py-2 hover:bg-white/10"
+                className="w-full text-left px-4 py-2 hover:bg-white/10 flex items-center gap-2"
               >
-                Profile
+                <span>⚙️</span>
+                <span>Settings</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  setContactModalOpen(true);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-white/10 flex items-center gap-2"
+              >
+                <span>✉️</span>
+                <span>Contact us</span>
               </button>
 
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-white/10 text-red-400"
+                className="w-full text-left px-4 py-2 hover:bg-white/10 text-red-400 flex items-center gap-2"
               >
-                Log out
+                <span>🚪</span>
+                <span>Log out</span>
               </button>
             </div>
           )}
         </div>
       </aside>
+
+      {/* Contact Modal */}
+      {contactModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Contact Us</h2>
+              <button
+                onClick={() => setContactModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Send us your suggestions or report any problems you're experiencing.
+            </p>
+
+            <textarea
+              value={contactMessage}
+              onChange={(e) => setContactMessage(e.target.value)}
+              placeholder="Type your message here..."
+              className="w-full border border-gray-300 rounded-lg p-3 text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-4"
+              rows={6}
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setContactModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleContactSubmit}
+                disabled={!contactMessage.trim() || sendingMessage}
+                className="flex-1 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {sendingMessage ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

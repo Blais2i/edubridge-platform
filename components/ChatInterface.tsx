@@ -13,6 +13,7 @@ const supabase = createClient(
 type Message = {
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
 };
 
 export default function ChatInterface({
@@ -25,14 +26,20 @@ export default function ChatInterface({
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
 
-  const [conversationId, setConversationId] = useState<string | null>(
-    conversationIdProp
-  );
+  const [conversationId, setConversationId] =
+    useState<string | null>(conversationIdProp);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const [visionAttempts, setVisionAttempts] = useState<number>(0);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* ---------------- USER ---------------- */
 
@@ -45,17 +52,23 @@ export default function ChatInterface({
   useEffect(() => {
     if (!user) return;
 
-    const loadProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .single();
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setProfile(data);
+      });
 
-      if (data) setProfile(data);
-    };
-
-    loadProfile();
+    supabase
+      .from("vision_usage")
+      .select("attempts")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setVisionAttempts(data.attempts);
+      });
   }, [user]);
 
   /* ---------------- CONVERSATION ---------------- */
@@ -72,51 +85,82 @@ export default function ChatInterface({
   useEffect(() => {
     if (!conversationId) return;
 
-    const loadMessages = async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("role, content")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
-
-      if (data) setMessages(data);
-    };
-
-    loadMessages();
+    supabase
+      .from("messages")
+      .select("role, content, image_url")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (!data) return;
+        setMessages(
+          data.map((m) => ({
+            role: m.role,
+            content: m.content,
+            imageUrl: m.image_url || undefined,
+          }))
+        );
+      });
   }, [conversationId]);
 
   /* ---------------- AUTO SCROLL ---------------- */
 
   useEffect(() => {
-    if (!bottomRef.current) return;
-    bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  /* ---------------- HELPERS ---------------- */
+  /* ---------------- FILE HANDLING ---------------- */
 
-  async function generateTitleFromFirstMessage(text: string) {
-    try {
-      const res = await fetch("/api/title", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      const data = await res.json();
-      return data?.title || "New chat";
-    } catch {
-      return "New chat";
+    if (visionAttempts >= 3) {
+      alert("Igerageza ryawe ryarangiye.");
+      return;
     }
-  }
+
+    const allowed = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "application/pdf",
+    ];
+
+    if (!allowed.includes(file.type)) {
+      alert("Only images or PDF files are allowed.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File must be less than 5MB.");
+      return;
+    }
+
+    setUploadedFile(file);
+
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const clearFile = () => {
+    setUploadedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   /* ---------------- SEND MESSAGE ---------------- */
 
   async function sendMessage() {
-    if (!input.trim() || loading || !user) return;
+    if ((!input.trim() && !uploadedFile) || loading || !user) return;
 
+    setLoading(true);
     const text = input;
     setInput("");
-    setLoading(true);
 
     let convoId = conversationId;
 
@@ -135,32 +179,77 @@ export default function ChatInterface({
       convoId = data.id;
       setConversationId(convoId);
       onConversationCreated(convoId);
-
-      const title = await generateTitleFromFirstMessage(text);
-      await supabase.from("conversations").update({ title }).eq("id", convoId);
     }
 
-    const userMessage: Message = { role: "user", content: text };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    let fileUrl: string | null = null;
+
+    if (uploadedFile) {
+      const path = `${convoId}/${Date.now()}_${uploadedFile.name}`;
+
+      const { error } = await supabase.storage
+        .from("chat-files")
+        .upload(path, uploadedFile);
+
+      if (!error) {
+        const { data } = supabase.storage
+          .from("chat-files")
+          .getPublicUrl(path);
+        fileUrl = data.publicUrl;
+      }
+    }
+
+    const userMessage: Message = {
+      role: "user",
+      content: text || "Please analyze the uploaded file.",
+      imageUrl: fileUrl || undefined,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
 
     await supabase.from("messages").insert({
       conversation_id: convoId,
       role: "user",
-      content: text,
+      content: userMessage.content,
+      image_url: fileUrl,
     });
 
-    try {
-      const res = await fetch("/api/chat", {
+    clearFile();
+
+    /* ---------- 🚫 PDF BLOCK (FRONTEND ENFORCED) ---------- */
+    if (fileUrl && fileUrl.endsWith(".pdf")) {
+      const warningMessage: Message = {
+        role: "assistant",
+        content:
+`Nyamuneka fata ifoto y'urupapuro ushaka gusobanukirwa.
+
+Please upload a photo of the page you want help with.`,
+      };
+
+      setMessages((prev) => [...prev, warningMessage]);
+
+      await supabase.from("messages").insert({
+        conversation_id: convoId,
+        role: "assistant",
+        content: warningMessage.content,
+      });
+
+      setLoading(false);
+      return;
+    }
+
+    /* ---------- 🧠 IMAGE → VISION ---------- */
+    if (fileUrl) {
+      const res = await fetch("/api/vision", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          conversationId: convoId,
-          messages: updatedMessages,
+          fileUrl,
+          userId: user.id,
         }),
       });
 
       const json = await res.json();
+      setVisionAttempts((v) => Math.min(v + 1, 3));
 
       const aiMessage: Message = {
         role: "assistant",
@@ -174,9 +263,71 @@ export default function ChatInterface({
         role: "assistant",
         content: aiMessage.content,
       });
-    } finally {
+
       setLoading(false);
+      return;
     }
+
+    /* ---------- 💬 TEXT CHAT ---------- */
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationId: convoId,
+        messages: [...messages, userMessage],
+      }),
+    });
+
+    const json = await res.json();
+
+    const aiMessage: Message = {
+      role: "assistant",
+      content: json.response,
+    };
+
+    setMessages((prev) => [...prev, aiMessage]);
+
+    await supabase.from("messages").insert({
+      conversation_id: convoId,
+      role: "assistant",
+      content: aiMessage.content,
+    });
+
+    // Generate intelligent title for new conversations
+    if (messages.length === 0) {
+      try {
+        const titleRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversationId: convoId,
+            messages: [
+              {
+                role: "user",
+                content: `Generate a very short title (max 4-5 words) that summarizes this conversation. Only respond with the title, nothing else: "${userMessage.content}"`
+              }
+            ],
+          }),
+        });
+
+        const titleJson = await titleRes.json();
+        const title = titleJson.response.slice(0, 40);
+        
+        await supabase
+          .from("conversations")
+          .update({ title })
+          .eq("id", convoId);
+      } catch (err) {
+        // Fallback to truncated user message if title generation fails
+        const fallbackTitle = userMessage.content.slice(0, 30) + "...";
+        await supabase
+          .from("conversations")
+          .update({ title: fallbackTitle })
+          .eq("id", convoId);
+      }
+    }
+
+    setLoading(false);
   }
 
   const firstName = profile?.full_name?.split(" ")[0] || "inshuti";
@@ -184,87 +335,113 @@ export default function ChatInterface({
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="flex flex-col h-full bg-white font-sans rounded-none sm:rounded-xl sm:shadow-md sm:border overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
-        <Logo
-          size={28}
-          onClick={() => {
-            setConversationId(null);
-            setMessages([]);
-            onConversationCreated(null);
-          }}
-        />
+    <div className="flex flex-col h-full bg-white border rounded-xl overflow-hidden">
+      <div className="flex items-center gap-3 p-4 border-b">
+        <Logo size={28} />
         <div>
-          <h2 className="font-semibold text-sm sm:text-base text-gray-900">
-            Blaise AI
-          </h2>
+          <h2 className="font-semibold">Blaise AI</h2>
           <p className="text-xs text-gray-600">
-            Your tutor • Kinyarwanda first
+            {conversationId ? "Your tutor • Kinyarwanda first" : "Kinyarwanda first"}
           </p>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-white">
-        {messages.length === 0 && !loading && (
-          <div className="min-h-full flex items-center justify-center text-center text-slate-500 px-4">
-            <div>
-              <p className="text-base sm:text-lg font-medium mb-2 text-gray-800">
-                Muraho {firstName}.
-              </p>
-              <p className="text-sm sm:text-base text-gray-700">
-                Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.
-              </p>
-              <p className="text-xs sm:text-sm mt-3 text-gray-500">
-                I'm ready to learn with you today.
-              </p>
-            </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 && (
+          <div className="text-center">
+            <p className="font-semibold text-lg mb-2">Muraho {firstName}.</p>
+            <p className="text-gray-600">Nditeguye kugufasha uyu munsi. Andika ikibazo wifuza kwiga.</p>
+            <p className="text-sm text-gray-500 mt-1">I'm ready to learn with you today.</p>
           </div>
         )}
 
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base shadow-sm ${
+            className={`rounded-xl p-3 ${
               msg.role === "assistant"
-                ? "w-full bg-cyan-50 border border-cyan-200 text-slate-800"
-                : "max-w-[85%] ml-auto bg-gray-100 text-slate-900 border border-gray-200"
+                ? "bg-cyan-50 border"
+                : "bg-gray-100 ml-auto max-w-[85%]"
             }`}
           >
+            {msg.imageUrl && (
+              <div className="mb-2">
+                {msg.imageUrl.endsWith(".pdf") ? (
+                  <a
+                    href={msg.imageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 underline"
+                  >
+                    📄 View PDF
+                  </a>
+                ) : (
+                  <a
+                    href={msg.imageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={msg.imageUrl}
+                      className="max-w-[220px] max-h-[220px] rounded border object-contain"
+                    />
+                  </a>
+                )}
+              </div>
+            )}
+
             <MessageRenderer content={msg.content} />
           </div>
         ))}
 
         {loading && (
-          <div className="w-full sm:max-w-xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-sm text-slate-600 italic shadow-sm">
+          <p className="italic text-sm text-gray-500">
             Blaise AI irimo gutekereza…
-            <br />
-            <span className="text-xs">Blaise AI is thinking…</span>
-          </div>
+          </p>
         )}
 
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3 bg-white sticky bottom-0 z-10">
+      <div className="border-t p-3 flex gap-2">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept="image/jpeg,image/png,image/jpg,application/pdf"
+          className="hidden"
+        />
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={visionAttempts >= 3}
+          className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+        >
+          📎
+        </button>
+
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Andika ikibazo..."
-          style={{ color: "#111827" }}
-          className="flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-2 text-sm sm:text-base bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+          className="flex-1 border rounded px-3 py-2"
         />
+
         <button
           onClick={sendMessage}
           disabled={loading}
-          className="bg-cyan-500 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform"
+          className="bg-cyan-500 text-white px-4 rounded disabled:opacity-50"
         >
-          {loading ? "..." : "Send"}
+          Send
         </button>
       </div>
+
+      {visionAttempts >= 3 && (
+        <p className="text-center text-sm text-red-600 pb-2">
+          Igerageza ryawe ryarangiye.
+        </p>
+      )}
     </div>
   );
 }

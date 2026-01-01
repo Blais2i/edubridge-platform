@@ -1,16 +1,37 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import ChatInterface from "@/components/ChatInterface";
 import SidebarRail from "@/components/SidebarRail";
 
 export default function ChatPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] =
     useState<string | null>(null);
   const [refreshSidebar, setRefreshSidebar] = useState(0);
   const [chatInstanceKey, setChatInstanceKey] = useState(0);
+
+  /* ---------------- Load conversation from URL on mount ---------------- */
+  useEffect(() => {
+    const convoId = searchParams.get("c");
+    if (convoId) {
+      setActiveConversationId(convoId);
+    }
+  }, [searchParams]);
+
+  /* ---------------- Update URL when conversation changes ---------------- */
+  useEffect(() => {
+    if (activeConversationId) {
+      router.push(`/chat?c=${activeConversationId}`, { scroll: false });
+    } else {
+      router.push("/chat", { scroll: false });
+    }
+  }, [activeConversationId, router]);
 
   /* ---------------- Sidebar control ---------------- */
 

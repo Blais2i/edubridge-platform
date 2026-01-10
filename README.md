@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blaise AI
 
-## Getting Started
+**Blaise AI** is a Kinyarwanda-first learning assistant designed for students in Rwanda.  
+It helps learners understand school concepts through guided explanation, not shortcuts or direct answers.
 
-First, run the development server:
+The platform behaves like a **real tutor**: warm, patient, and step-by-step.
 
+---
+
+## 🎯 Purpose
+
+Many students can memorize but struggle to understand.  
+Blaise AI focuses on **thinking, clarity, and confidence**, using language students naturally understand.
+
+The assistant:
+- Explains first in **Kinyarwanda**, then in **English**
+- Guides students step by step instead of giving instant answers
+- Adapts tone based on the student’s grade (P1–S6)
+- Responds with warmth, encouragement, and patience
+
+---
+
+## 🧠 How Blaise AI Teaches
+
+Blaise AI does **not** act like a homework cheat tool.
+
+When a student asks a question:
+1. The assistant restates the question in simple Kinyarwanda
+2. Identifies important details
+3. Asks the student what they think should be done first
+4. Guides the student step by step
+5. Only gives a full solution if the student explicitly asks
+
+For emotional or casual messages, Blaise AI responds like a caring tutor and gently encourages learning.
+
+---
+
+## 🌍 Language Approach
+
+- Kinyarwanda-first, natural spoken language
+- Avoids literal translations and robotic tone
+- Uses everyday examples from Rwanda (RWF, daily life, local objects)
+- Adjusts language complexity based on grade level
+
+---
+
+## ✨ Key Features
+
+- 👩🏽‍🏫 Tutor-like AI behavior (not robotic)
+- 🇷🇼 Kinyarwanda → English explanations
+- 📚 Grade-aware teaching (P1–S6)
+- 💬 Saved chat history
+- 🧠 Conversation titles generated automatically
+- 🔐 Secure authentication (Supabase)
+- 🎨 Modern, ChatGPT-style interface
+- 📱 Designed for web, mobile-friendly
+
+---
+
+## 🛠 Tech Stack
+
+**Frontend**
+- Next.js (App Router)
+- React
+- Tailwind CSS
+
+**Backend**
+- Next.js API routes
+- OpenAI API (GPT-4o-mini)
+
+**Authentication & Database**
+- Supabase Auth
+- Supabase PostgreSQL (conversations & messages)
+
+**Deployment**
+- Vercel
+
+---
+
+## 🧪 Pilot Testing
+
+Blaise AI is currently in **pilot testing** with students and youth learning centers in Rwanda.
+
+The goal of the pilot:
+- Observe how students interact with a Kinyarwanda-first tutor
+- Improve clarity, tone, and learning flow
+- Ensure trust from teachers and parents
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+git clone https://github.com/your-username/blaise-ai.git
+cd blaise-ai
